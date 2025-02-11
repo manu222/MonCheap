@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonCheap - Login</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <div class="login-container">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap Logo" class="logo">
+        <h1 class="title">MonCheap</h1>
+        <form action="{{ url_for('login') }}" method="post">
+            <div class="input-group">
+                <label for="mail">Correo</label>
+                <input type="mail" name="mail" id="mail" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <input type="password" name="password" id="password" required>
+            </div>
+
+            <button type="submit" class="login-button">Login</button>
+        </form>
+    </div>
+</body>
+</html>

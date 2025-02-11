@@ -1,0 +1,102 @@
+/* Fuente moderna */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #ece3ff, #d29df3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Contenedor del login */
+.login-container {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    width: 350px;
+    transition: transform 0.3s ease-in-out;
+    position: relative; /* Esto es importante para posicionar el logo */
+}
+
+/* Efecto sutil al pasar el mouse */
+.login-container:hover {
+    transform: scale(1.02);
+}
+
+/* Estilo del título */
+.title {
+    font-size: 26px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: #6e41c7;
+}
+
+/* Logo */
+.logo {
+    position: absolute;
+    top: -40px;  /* Ajusta la posición vertical del logo */
+    left: 50%;
+    transform: translateX(-50%); /* Centra el logo horizontalmente */
+    width: 80px; /* Ajusta el tamaño del logo */
+    height: auto;
+}
+
+/* Input Group */
+.input-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+/* Labels */
+label {
+    font-weight: 400;
+    color: #6e41c7;
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #d29df3;
+    border-radius: 8px;
+    outline: none;
+    font-size: 16px;
+    transition: border-color 0.3s ease-in-out;
+}
+
+/* Efecto en inputs */
+input:focus {
+    border-color: #6e41c7;
+    box-shadow: 0px 0px 8px rgba(110, 65, 199, 0.3);
+}
+
+/* Botón de login */
+.login-button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, #fbce03, #ebce43);
+    color: black;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 5px 15px rgba(251, 206, 3, 0.3);
+}
+
+/* Hover en botón */
+.login-button:hover {
+    background: linear-gradient(90deg, #ebce43, #fbce03);
+    box-shadow: 0px 5px 20px rgba(251, 206, 3, 0.5);
+}
+
+/* Efecto de clic */
+.login-button:active {
+    transform: scale(0.98);
+}
