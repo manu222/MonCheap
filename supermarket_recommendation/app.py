@@ -50,6 +50,28 @@ def login():
             return render_template('login.html', error='Usuario o contraseña incorrectos')
     return render_template('login.html')
 
+
+def get_likes():
+    connection = mysql.connector.connect(**db_config)
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("Select * from products")
+    likes = cursor.fetchall()
+
+    # Convertir BLOB a base64 para mostrar en HTML
+    for like in likes:
+        if like['image']:
+            like['image'] = base64.b64encode(like['image']).decode('utf-8')
+
+    cursor.close()
+    connection.close()
+    return likes
+
+@app.route('/likes')
+def likes():
+    user_likes = get_likes()
+    return render_template('likes.html', user_likes=user_likes)
+
+
 @app.route('/')
 def index():
     products = get_products()
