@@ -100,12 +100,14 @@ input:focus {
 .login-button:active {
     transform: scale(0.98);
 }
+
 /* Tarjetas de productos */
 .product-card {
     border-radius: 12px;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     background: white;
+    
 }
 
 .product-card:hover {
@@ -123,14 +125,14 @@ input:focus {
 
 /* Título del producto */
 .card-title {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
     color: #6e41c7;
 }
 
 /* Categoría del producto */
 .card-text {
-    font-size: 14px;
+    font-size: 9px;
     color: #666;
 }
 

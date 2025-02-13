@@ -37,10 +37,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 this.setAttribute("title", "Quitar de favoritos");
             }
 
-
-
-
-
             fetch(`/toggle_favorite/${productId}`, { method: "POST" })
                 .then(response => response.json())
                 .then(data => {
