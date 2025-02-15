@@ -45,7 +45,7 @@ def login():
         # chekc if the user exists
         user = checkLogin(username, password)
         if user:
-            return redirect(url_for('index'))
+            return redirect(url_for('likes'))
         else:
             return render_template('login.html', error='Usuario o contraseña incorrectos')
     return render_template('login.html')
