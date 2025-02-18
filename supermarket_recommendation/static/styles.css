@@ -123,6 +123,8 @@ input:focus {
     border-bottom: 3px solid #6e41c7;
 }
 
+
+
 /* Título del producto */
 .card-title {
     font-size: 14px;
@@ -174,6 +176,11 @@ input:focus {
     align-items: center;
     justify-content: center;
     transition: transform 0.2s ease-in-out, background 0.3s;
+}
+.heart-icon {
+    width: 30px; /* Tamaño del corazón */
+    height: 30px;
+    cursor: pointer;
 }
 
 /* Efecto al pasar el mouse */

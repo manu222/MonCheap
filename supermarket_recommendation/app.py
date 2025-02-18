@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
 import base64
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las sesiones
 
 # Configuración de la base de datos MySQL
 db_config = {
@@ -12,26 +13,33 @@ db_config = {
     'database': 'supermarket'
 }
 
+# Función para obtener la conexión a la base de datos
+def get_db_connection():
+    connection = mysql.connector.connect(**db_config)
+    return connection
+
 # Función para obtener los productos de la base de datos
 def get_products():
-    connection = mysql.connector.connect(**db_config)
+    connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, category, image FROM products")
+    cursor.execute("SELECT * FROM producto")
     products = cursor.fetchall()
 
     # Convertir BLOB a base64 para mostrar en HTML
     for product in products:
-        if product['image']:
-            product['image'] = base64.b64encode(product['image']).decode('utf-8')
+        if product['img']:
+            product['img'] = base64.b64encode(product['img']).decode('utf-8')
+        else:
+            product['img'] = "No image available"
 
     cursor.close()
     connection.close()
     return products
 
 def checkLogin(mail, password):
-    connection = mysql.connector.connect(**db_config)
+    connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM users WHERE mail = %s AND password = %s", (mail, password))
+    cursor.execute("SELECT * FROM usuario WHERE gmail = %s AND contraseña = %s", (mail, password))
     user = cursor.fetchone()
     cursor.close()
     connection.close()
@@ -42,33 +50,46 @@ def login():
     if request.method == 'POST':
         username = request.form['mail']
         password = request.form['password']
-        # chekc if the user exists
+        # Check if the user exists
         user = checkLogin(username, password)
         if user:
-            return redirect(url_for('likes'))
+            session['user_id'] = user[0]  # Guardar el user_id en la sesión
+            return redirect(url_for('likes', user_id=user[0]))  # Asumiendo que el user_id es el primer campo
         else:
             return render_template('login.html', error='Usuario o contraseña incorrectos')
     return render_template('login.html')
 
 
-def get_likes():
-    connection = mysql.connector.connect(**db_config)
+# Función para obtener los productos que el usuario tiene como "me gusta"
+def get_likes(user_id):
+    connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("Select * from products")
+
+    query = """
+    SELECT p.id_producto, p.nombre, p.marca, p.categoria, p.img, COALESCE(MIN(pr.precio), 0) AS precio
+    FROM likes l
+    JOIN producto p ON l.id_producto = p.id_producto
+    LEFT JOIN precios pr ON p.id_producto = pr.id_producto
+    WHERE l.id_user = %s
+    GROUP BY p.id_producto, p.nombre, p.marca, p.categoria, p.img
+    """
+    
+    cursor.execute(query, (user_id,))
     likes = cursor.fetchall()
 
-    # Convertir BLOB a base64 para mostrar en HTML
+    # Si la imagen está vacía, asignamos una imagen predeterminada
     for like in likes:
-        if like['image']:
-            like['image'] = base64.b64encode(like['image']).decode('utf-8')
+        if not like['img']:
+            like['img'] = "https://via.placeholder.com/150"  # Imagen predeterminada
 
     cursor.close()
     connection.close()
     return likes
 
-@app.route('/likes')
-def likes():
-    user_likes = get_likes()
+
+@app.route('/likes/<int:user_id>')
+def likes(user_id):
+    user_likes = get_likes(user_id)
     return render_template('likes.html', user_likes=user_likes)
 
 
@@ -76,6 +97,7 @@ def likes():
 def index():
     products = get_products()
     return render_template('index.html', products=products)
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -87,9 +109,9 @@ def upload():
     image = request.files['image'].read()
 
     # Conectar a la base de datos y guardar los datos
-    connection = mysql.connector.connect(**db_config)
+    connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO products (name, category, image) VALUES (%s, %s, %s)", (name, category, image))
+    cursor.execute("INSERT INTO producto (nombre, categoria, img) VALUES (%s, %s, %s)", (name, category, image))
     connection.commit()
 
     cursor.close()
@@ -97,5 +119,47 @@ def upload():
 
     return redirect(url_for('index'))
 
+
+@app.route('/toggle_favorite/<int:product_id>', methods=['POST'])
+def toggle_favorite(product_id):
+    # Verifica si el usuario está autenticado
+    if 'user_id' not in session:
+        return jsonify(success=False, error="Usuario no autenticado"), 401
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    
+    # Verificar si el registro ya existe en la tabla likes
+    query = "SELECT * FROM likes WHERE id_user = %s AND id_producto = %s"
+    cursor.execute(query, (user_id, product_id))
+    like = cursor.fetchone()
+    
+    if like:
+        # Si ya existe, eliminarlo (quitar de favoritos)
+        delete_query = "DELETE FROM likes WHERE id_user = %s AND id_producto = %s"
+        cursor.execute(delete_query, (user_id, product_id))
+        connection.commit()
+        action = "removed"
+    else:
+        # Si no existe, insertarlo (añadir a favoritos)
+        insert_query = "INSERT INTO likes (id_user, id_producto) VALUES (%s, %s)"
+        cursor.execute(insert_query, (user_id, product_id))
+        connection.commit()
+        action = "added"
+    
+    cursor.close()
+    connection.close()
+    
+    return jsonify(success=True, action=action)
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # Eliminar el user_id de la sesión
+    return redirect(url_for('login'))
+
+
 if __name__ == '__main__':
-    app.run(debug=True,port=8080)
+    app.run(debug=True, port=8080)
+    
