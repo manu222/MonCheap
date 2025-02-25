@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
 import base64
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las sesiones
@@ -27,9 +28,7 @@ def get_products():
 
     # Convertir BLOB a base64 para mostrar en HTML
     for product in products:
-        if product['img']:
-            product['img'] = base64.b64encode(product['img']).decode('utf-8')
-        else:
+        if not product['img']:
             product['img'] = "No image available"
 
     cursor.close()
@@ -38,26 +37,69 @@ def get_products():
 
 def checkLogin(mail, password):
     connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM usuario WHERE gmail = %s AND contraseña = %s", (mail, password))
+    cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
+    cursor.execute("SELECT * FROM usuario WHERE gmail = %s", (mail,))
     user = cursor.fetchone()
     cursor.close()
     connection.close()
-    return user
+
+    # Si el usuario existe y la contraseña coincide
+    if user and bcrypt.checkpw(password.encode('utf-8'), user['contraseña'].encode('utf-8')):
+        return user
+    return None
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['mail']
         password = request.form['password']
-        # Check if the user exists
+
         user = checkLogin(username, password)
         if user:
-            session['user_id'] = user[0]  # Guardar el user_id en la sesión
-            return redirect(url_for('likes', user_id=user[0]))  # Asumiendo que el user_id es el primer campo
+            session['user_id'] = user['id']  # Guardar el user_id en la sesión
+            return redirect(url_for('likes', user_id=user['id']))
         else:
             return render_template('login.html', error='Usuario o contraseña incorrectos')
+
     return render_template('login.html')
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        correo = request.form['gmail']
+        password = request.form['password']
+
+        #Hashear la contraseña
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Verificar si el usuario ya existe
+        cursor.execute("SELECT * FROM usuario WHERE gmail = %s", (correo,))
+
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            cursor.close()
+            connection.close()
+            return render_template('register.html', error='Este correo ya está registrado')
+
+        # Insertar el nuevo usuario en la base de datos
+        cursor.execute("INSERT INTO usuario (nombre, gmail, contraseña) VALUES (%s, %s, %s)",
+                       (nombre, correo, hashed_password.decode('utf-8')))
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect(url_for('login'))  # Redirigir al login después del registro
+
+    return render_template('register.html')
+
 
 
 # Función para obtener los productos que el usuario tiene como "me gusta"

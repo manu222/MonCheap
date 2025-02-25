@@ -25,6 +25,9 @@
 
             <button type="submit" class="login-button">Login</button>
         </form>
+        <p class="register-redirect">¿No tienes cuenta? <a href="{{ url_for('register') }}">Registrarse</a></p>
+        <!--Poner el error que se recibe-->
+        <p class="error">{{ error }}</p>
     </div>
 </body>
 </html>

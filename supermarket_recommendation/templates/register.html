@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonCheap - Registro</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <script defer src="{{ url_for('static', filename='../script.js') }}"></script>
+</head>
+<body>
+    <div class="register-container">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap Logo" class="logo">
+        <h1 class="title">Registrarse en MonCheap</h1>
+        <form action="{{ url_for('register') }}" method="post">
+            <div class="input-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" name="nombre" id="nombre" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="gmail">Correo</label>
+                <input type="email" name="gmail" id="gmail" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <input type="password" name="password" id="password" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="confirm-password">Confirmar Contraseña</label>
+                <input type="password" name="confirm-password" id="confirm-password" required>
+            </div>
+            
+            <button type="submit" class="register-button">Registrarse</button>
+        </form>
+        <p class="login-redirect">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia sesión</a></p>
+        <p class="error">{{ error }}</p>
+    </div>
+</body>
+</html>

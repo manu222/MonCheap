@@ -11,8 +11,13 @@ body {
     margin: 0;
 }
 
+.error{
+    color: red;
+    font-size: 12px;
+}
+
 /* Contenedor del login */
-.login-container {
+.login-container, .register-container {
     background: white;
     padding: 40px;
     border-radius: 15px;
@@ -20,34 +25,35 @@ body {
     text-align: center;
     width: 350px;
     transition: transform 0.3s ease-in-out;
-    position: relative; /* Esto es importante para posicionar el logo */
+    position: relative;
 }
 
-/* Efecto sutil al pasar el mouse */
-.login-container:hover {
+.login-container:hover, .register-container:hover {
     transform: scale(1.02);
-}
-
-/* Estilo del título */
-.title {
-    font-size: 26px;
-    margin-bottom: 20px;
-    font-weight: 700;
-    color: #6e41c7;
 }
 
 /* Logo */
 .logo {
     position: absolute;
-    top: -40px;  /* Ajusta la posición vertical del logo */
+    top: -40px;
     left: 50%;
-    transform: translateX(-50%); /* Centra el logo horizontalmente */
-    width: 80px; /* Ajusta el tamaño del logo */
+    transform: translateX(-50%);
+    width: 80px;
     height: auto;
 }
 
-/* Input Group */
+/* Título */
+.title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #6e41c7;
+    margin-bottom: 20px;
+}
+
+/* Estilos para los grupos de entrada */
 .input-group {
+    display: flex;
+    flex-direction: column;
     text-align: left;
     margin-bottom: 15px;
 }
@@ -56,6 +62,7 @@ body {
 label {
     font-weight: 400;
     color: #6e41c7;
+    margin-bottom: 5px;
 }
 
 /* Inputs */
@@ -67,16 +74,16 @@ input {
     outline: none;
     font-size: 16px;
     transition: border-color 0.3s ease-in-out;
+    box-sizing: border-box;
 }
 
-/* Efecto en inputs */
 input:focus {
     border-color: #6e41c7;
     box-shadow: 0px 0px 8px rgba(110, 65, 199, 0.3);
 }
 
-/* Botón de login */
-.login-button {
+/* Botones */
+.login-button, .register-button {
     width: 100%;
     padding: 12px;
     background: linear-gradient(90deg, #fbce03, #ebce43);
@@ -90,16 +97,32 @@ input:focus {
     box-shadow: 0px 5px 15px rgba(251, 206, 3, 0.3);
 }
 
-/* Hover en botón */
-.login-button:hover {
+.login-button:hover, .register-button:hover {
     background: linear-gradient(90deg, #ebce43, #fbce03);
     box-shadow: 0px 5px 20px rgba(251, 206, 3, 0.5);
 }
 
-/* Efecto de clic */
-.login-button:active {
+.login-button:active, .register-button:active {
     transform: scale(0.98);
 }
+
+.login-redirect, .register-redirect {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #333;
+}
+
+.login-redirect a, .register-redirect a {
+    color: #007BFF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-redirect a:hover, .register-redirect a:hover {
+    text-decoration: underline;
+}
+
 
 /* Tarjetas de productos */
 .product-card {
@@ -107,7 +130,7 @@ input:focus {
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     background: white;
-    
+    position: relative;
 }
 
 .product-card:hover {
@@ -121,45 +144,17 @@ input:focus {
     height: 200px;
     object-fit: cover;
     border-bottom: 3px solid #6e41c7;
+    border-radius: 10px 10px 0 0;
 }
 
-
-
-/* Título del producto */
-.card-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #6e41c7;
-}
-
-/* Categoría del producto */
-.card-text {
-    font-size: 9px;
-    color: #666;
-}
-
-/* Ajuste de la fila de tarjetas */
-.row {
-    margin: 0 auto;
-}
-
-/* Contenedor de la imagen para colocar el corazón dentro */
+/* Contenedor de la imagen con el corazón */
 .image-container {
     position: relative;
     display: inline-block;
     width: 100%;
 }
 
-/* Imagen del producto */
-.product-img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-bottom: 3px solid #6e41c7;
-    border-radius: 10px 10px 0 0;
-}
-
-/* Icono de corazón dentro de la imagen */
+/* Icono de corazón */
 .heart-btn {
     position: absolute;
     top: 10px;
@@ -177,31 +172,30 @@ input:focus {
     justify-content: center;
     transition: transform 0.2s ease-in-out, background 0.3s;
 }
-.heart-icon {
-    width: 30px; /* Tamaño del corazón */
-    height: 30px;
-    cursor: pointer;
-}
 
-/* Efecto al pasar el mouse */
 .heart-btn:hover {
     background: rgba(255, 255, 255, 1);
     transform: scale(1.2);
 }
 
-/* Tarjeta de producto */
-.product-card {
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    background: white;
-    position: relative;
+.heart-icon {
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
 }
 
-.product-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.2);
+/* Texto dentro de la tarjeta */
+.card-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #6e41c7;
 }
+
+.card-text {
+    font-size: 9px;
+    color: #666;
+}
+
 /* Navbar personalizado */
 .custom-navbar {
     background: linear-gradient(135deg, #6e41c7, #8b5cf6);
@@ -221,7 +215,7 @@ input:focus {
     color: #f8d30e;
 }
 
-/* Logo dentro del navbar */
+/* Logo del navbar */
 .logo-nav {
     width: 40px;
     height: auto;
@@ -258,13 +252,12 @@ input:focus {
     margin-right: 5px;
 }
 
-/* Hover en los enlaces */
 .navbar-nav .nav-link:hover {
     background: rgba(255, 255, 255, 0.2);
     color: #f8d30e;
 }
 
-/* Botón de logout con más contraste */
+/* Botón de logout */
 .logout-btn {
     background: #ff6b6b;
     color: white;

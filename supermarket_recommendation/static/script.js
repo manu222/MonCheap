@@ -1,16 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Animación de entrada para el login (si corresponde)
-    const loginContainer = document.querySelector(".login-container");
-    if (loginContainer) {
-        loginContainer.style.opacity = "0";
-        loginContainer.style.transform = "translateY(-20px)";
-    
-        setTimeout(() => {
-            loginContainer.style.transition = "opacity 0.8s ease-out, transform 0.8s ease-out";
-            loginContainer.style.opacity = "1";
-            loginContainer.style.transform = "translateY(0)";
-        }, 200);
+   
+     // Función para animar contenedores
+     function animateContainer(container) {
+        if (container) {
+            container.style.opacity = "0";
+            container.style.transform = "translateY(-20px)";
+
+            setTimeout(() => {
+                container.style.transition = "opacity 0.8s ease-out, transform 0.8s ease-out";
+                container.style.opacity = "1";
+                container.style.transform = "translateY(0)";
+            }, 200);
+        }
     }
+
+    // Aplicar animación si los contenedores existen
+    animateContainer(document.querySelector(".login-container"));
+    animateContainer(document.querySelector(".register-container"));
 
     // Inicializar tooltips de Bootstrap
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
