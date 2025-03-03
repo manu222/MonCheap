@@ -9,8 +9,8 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 # Configuración de la base de datos MySQL
 db_config = {
     'host': 'localhost',
-    'user': 'root',  # Cambia esto por tu usuario de MySQL
-    'password': '',  # Cambia esto por tu contraseña de MySQL
+    'user': 'root',
+    'password': '',
     'database': 'supermarket'
 }
 
@@ -119,10 +119,9 @@ def get_likes(user_id):
     cursor.execute(query, (user_id,))
     likes = cursor.fetchall()
 
-    # Si la imagen está vacía, asignamos una imagen predeterminada
     for like in likes:
         if not like['img']:
-            like['img'] = "https://via.placeholder.com/150"  # Imagen predeterminada
+            like['img'] = "../static/images/placeholder.png"
 
     cursor.close()
     connection.close()
