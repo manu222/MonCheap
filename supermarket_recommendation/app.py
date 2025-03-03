@@ -35,7 +35,7 @@ def get_products():
     connection.close()
     return products
 
-def checkLogin(mail, password):
+def check_login(mail, password):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
     cursor.execute("SELECT * FROM usuario WHERE gmail = %s", (mail,))
@@ -55,7 +55,7 @@ def login():
         username = request.form['mail']
         password = request.form['password']
 
-        user = checkLogin(username, password)
+        user = check_login(username, password)
         if user:
             session['user_id'] = user['id']  # Guardar el user_id en la sesión
             return redirect(url_for('likes', user_id=user['id']))
