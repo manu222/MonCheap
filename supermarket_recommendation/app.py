@@ -11,7 +11,7 @@ db_config = {
     'host': 'localhost',
     'user': 'root',
     'password': '',
-    'database': 'supermarket'
+    'database': 'moncheap'
 }
 
 # Función para obtener la conexión a la base de datos
