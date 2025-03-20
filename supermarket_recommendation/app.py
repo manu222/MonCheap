@@ -9,8 +9,8 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 # Configuración de la base de datos MySQL
 db_config = {
     'host': 'localhost',
-    'user': 'root',
-    'password': '',
+    'user': 'manuel',
+    'password': 'pr0j3ctpcdg1',
     'database': 'moncheap'
 }
 
@@ -202,5 +202,5 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8000)
     
