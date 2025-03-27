@@ -9,8 +9,8 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 # Configuración de la base de datos MySQL
 db_config = {
     'host': 'localhost',
-    'user': 'manuel',
-    'password': 'pr0j3ctpcdg1',
+    'user': 'root',
+    'password': 'root',
     'database': 'moncheap'
 }
 
