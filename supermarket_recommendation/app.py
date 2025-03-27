@@ -10,7 +10,7 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'root',
     'database': 'moncheap'
 }
 
