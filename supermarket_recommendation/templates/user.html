@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonCheap - Registro</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <script defer src="{{ url_for('static', filename='../script.js') }}"></script>
+    <script>
+        function enableEdit() {
+            document.getElementById('nombre').removeAttribute('readonly');
+            document.getElementById('guardarBtn').style.display = 'inline-block';
+            document.getElementById('editarBtn').style.display = 'none';
+        }
+
+        function saveName() {
+            document.getElementById('nombre').setAttribute('readonly', true);
+            document.getElementById('guardarBtn').style.display = 'none';
+            document.getElementById('editarBtn').style.display = 'inline-block';
+        }
+    </script>
+</head>
+<body>
+    <div class="register-container">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap Logo" class="logo">
+        <h1 class="title">Informacion del usuario</h1>
+        <form action="{{ url_for('user_update') }}" method="post">
+            <div class="input-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" name="nombre" id="nombre" value="{{ session['user_name'] }}" readonly>
+            </div>
+            
+            <div class="input-group">
+                <label for="gmail">Correo</label>
+                <input type="email" name="gmail" id="gmail" value="{{ session['user_mail'] }}"readonly>
+            </div>
+            <button type="button" id="editarBtn" onclick="enableEdit()">Editar</button>
+            <button type="submit" id="guardarBtn" onclick="saveName()" style="display: none;">Guardar</button>
+        </form>
+        <p class="error">{{ error }}</p>
+    </div>
+</body>
+</html>

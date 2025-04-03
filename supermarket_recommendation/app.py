@@ -10,7 +10,7 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -58,6 +58,8 @@ def login():
         user = check_login(username, password)
         if user:
             session['user_id'] = user['id']  # Guardar el user_id en la sesión
+            session['user_name'] = user['nombre']
+            session['user_mail'] = user['gmail']
             return redirect(url_for('likes', user_id=user['id']))
         else:
             return render_template('login.html', error='Usuario o contraseña incorrectos')
@@ -100,7 +102,30 @@ def register():
 
     return render_template('register.html')
 
+#Función para cargar la página de usuarios
+@app.route('/user', methods=['GET', 'POST'])
+def user():
+   return render_template('user.html')
 
+#Función para actualizar el nombre del usuario
+@app.route('/user_update', methods=['GET', 'POST'])
+def user_update():
+    if request.method == 'POST':
+        #Sacar el nombre del usuario y su gmail
+        nombre = request.form['nombre']
+        id = session["user_id"]
+
+        #Conectarse a la DB
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+
+        cursor.execute("UPDATE usuario SET nombre = %s WHERE id = %s", (nombre, id))
+
+        cursor.close()
+        connection.close()
+        # Actualizar la sesión con el nuevo nombre
+        session['user_name'] = nombre
 
 # Función para obtener los productos que el usuario tiene como "me gusta"
 def get_likes(user_id):
