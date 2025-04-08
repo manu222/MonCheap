@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supermercados cercanos</title>
+
+  <!-- Estilos de Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Leaflet Routing Machine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+  <style>
+    html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  height: calc(100vh - 20px); /* Resta 20px para el padding inferior */
+  width: 100%;
+}
+
+    /* Slider para el rango */
+    #slider {
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Contenedor para la instrucción en móviles */
+    #mobileInstruction {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255,255,255,0.95);
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      z-index: 1100;
+      border-top: 1px solid #ccc;
+    }
+
+    /* Ajustes para dispositivos móviles */
+    @media (max-width: 768px) {
+      /* El mapa ocupa todo el alto de la ventana menos el alto del contenedor de instrucción */
+      #map { 
+        height: calc(100vh - 60px); 
+      }
+      /* Mostramos el contenedor de la instrucción */
+      #mobileInstruction {
+        display: block;
+      }
+      /* Ocultamos el panel de instrucciones por defecto de Routing Machine */
+      .leaflet-routing-container {
+        display: none;
+      }
+      .filter-control {
+        position: fixed !important;
+        top: 60px !important; /* Ajusta la posición más abajo */
+        left: 10px !important;
+        z-index: 1100;
+      }
+
+      #slider {
+        top: 5%; /* Elevar un poco el deslizable para mayor separación */
+      }
+
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  
+  <!-- Slider de rango -->
+  <div id="slider">
+    <label for="distance">Rango de búsqueda: </label>
+    <input type="range" id="distance" min="1000" max="10000" value="3000">
+    <span id="distanceValue">3000</span> metros
+    <br><br>
+  </div>
+  
+  <!-- Contenedor para la instrucción en móviles -->
+  <div id="mobileInstruction">Instrucción: -</div>
+
+  <button id="exitNavigation" style="display:none; position:fixed; top:10px; right:10px; z-index:1100;">Salir de navegación</button>
+  
+  <script>
+// Control personalizado para filtros con botón desplegable y toggle de selección
+var FilterControl = L.Control.extend({
+  onAdd: function(map) {
+    var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control filter-control');
+    container.style.backgroundColor = 'white';
+    container.style.padding = '10px';
+    container.style.borderRadius = '5px';
+    container.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+
+    // Botón para desplegar/ocultar el contenedor de filtros
+    var toggleButton = document.createElement('button');
+    toggleButton.innerHTML = '<img src="/static/images/filtrar.png" alt="Filtrar" style="width:24px; height:24px;">';
+    toggleButton.style.width = '100%';
+    toggleButton.style.marginBottom = '5px';
+    container.appendChild(toggleButton);
+
+    // Contenedor para el select con opción múltiple (inicialmente oculto)
+    var selectContainer = document.createElement('div');
+    selectContainer.style.display = 'none';
+
+    var select = document.createElement('select');
+    select.id = 'supermarket-filters';
+    select.multiple = true;
+    select.style.width = '150px';
+    select.style.height = '120px';
+
+    // Opciones para el select
+    var supermarketsList = ["Mercadona", "Dia", "Consum", "Carrefour", "Eroski", "BM", "Masymas", "Hiperber"];
+    supermarketsList.forEach(function(name) {
+      var option = document.createElement('option');
+      option.value = name;
+      option.text = name;
+      option.selected = true; // Seleccionado por defecto
+
+      // Agregar evento mousedown para alternar la selección
+      option.addEventListener('mousedown', function(e) {
+        // Prevenir el comportamiento por defecto
+        e.preventDefault();
+        // Alternar el estado "selected"
+        option.selected = !option.selected;
+        // Disparar manualmente el evento change
+        var event = new Event('change');
+        select.dispatchEvent(event);
+      });
+
+      select.appendChild(option);
+    });
+    selectContainer.appendChild(select);
+    container.appendChild(selectContainer);
+
+    // Evento para alternar la visibilidad del select
+    toggleButton.addEventListener('click', function(e) {
+      if (selectContainer.style.display === 'none') {
+        selectContainer.style.display = 'block';
+      } else {
+        selectContainer.style.display = 'none';
+      }
+    });
+
+    // Actualiza la visibilidad de los marcadores cada vez que cambie la selección
+    select.addEventListener('change', function() {
+      updateMarkersVisibilityCustom();
+    });
+
+    // Evita que el control propague eventos al mapa
+    L.DomEvent.disableClickPropagation(container);
+    return container;
+  }
+});
+
+
+    var map = L.map('map').setView([40.4168, -3.7038], 13);
+
+
+    var baseMaps = {
+      "Estándar": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+      "Satélite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+      "Simple": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png')
+    };
+
+    var defaultLayer = baseMaps["Estándar"];
+    defaultLayer.addTo(map);
+    L.control.layers(baseMaps).addTo(map);
+
+    var distance = 3000;
+    var userMarker;
+    var userLat, userLon;
+    var routeControl;
+
+    var supermarkets = {
+      "Mercadona": "/static/images/logosSupers/logomercadona.png",
+      "Dia": "/static/images/logosSupers/logoDia.png",
+      "Consum": "/static/images/logosSupers/logoconsum.png",
+      "Carrefour": "/static/images/logosSupers/logoCarrefour.png",
+      "Eroski": "/static/images/logosSupers/logoeroski.png",
+      "BM": "/static/images/logosSupers/logotipo_bm.png",
+      "Masymas": "/static/images/logosSupers/logomasymas.png",
+      "Hiperber": "/static/images/logosSupers/logoHiperber.png"
+    };
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(success, error);
+      } else {
+        alert("Tu navegador no soporta geolocalización.");
+      }
+    }
+
+    function success(position) {
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+
+      if (userMarker) {
+        map.removeLayer(userMarker);
+      }
+
+      map.setView([userLat, userLon], 14);
+
+      var redIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      userMarker = L.marker([userLat, userLon], { icon: redIcon }).addTo(map)
+        .bindPopup("📍 Estás aquí")
+        .openPopup();
+
+      getSupermarkets(userLat, userLon, distance);
+    }
+
+    function error(err) {
+      console.warn(`ERROR(${err.code}): ${err.message}`);
+      alert("No se pudo obtener tu ubicación.");
+    }
+
+    function getSupermarkets(lat, lon, distance) {
+  map.eachLayer(function(layer) {
+    if (layer instanceof L.Marker && layer !== userMarker) {
+      map.removeLayer(layer);
+    }
+  });
+  markers = [];
+
+  var overpassQuery = `
+    [out:json];
+    (
+      node["shop"="supermarket"](around:${distance}, ${lat}, ${lon});
+    );
+    out;
+  `;
+
+  var url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(overpassQuery);
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      data.elements.forEach(element => {
+        if (element.lat && element.lon) {
+          var name = element.tags.name || "Supermercado desconocido";
+          var dist = calculateDistance(lat, lon, element.lat, element.lon);
+          addSupermarketMarker(element.lat, element.lon, name, dist);
+        }
+      });
+      // Vuelve a aplicar los filtros después de añadir los nuevos marcadores
+      updateMarkersVisibility();
+    })
+    .catch(err => console.error("Error obteniendo supermercados:", err));
+}
+
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      var R = 6371e3;
+      var φ1 = lat1 * Math.PI / 180;
+      var φ2 = lat2 * Math.PI / 180;
+      var Δφ = (lat2 - lat1) * Math.PI / 180;
+      var Δλ = (lon2 - lon1) * Math.PI / 180;
+
+      var a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return Math.round(R * c);
+    }
+
+    function addSupermarketMarker(lat, lon, name, dist, shouldAdd = true) {
+  var logoUrl = supermarkets[name];
+  var iconSize = window.innerWidth > 768 ? [70, 70] : [50, 50];
+  var anchorSize = [iconSize[0] / 2, iconSize[1]];
+
+  var marker;
+  if (logoUrl) {
+    marker = L.marker([lat, lon], {
+      icon: L.icon({ 
+        iconUrl: logoUrl, 
+        iconSize: iconSize, 
+        iconAnchor: anchorSize, 
+        popupAnchor: [0, -iconSize[1] / 2]
+      })
+    });
+    if (shouldAdd) {
+      marker.addTo(map);
+    }
+    marker.bindPopup(`🛒 <b>${name}</b><br>📏 Distancia: ${dist} metros<br><button onclick="calculateRoute(${lat}, ${lon})">📍 Ir aquí</button>`)
+          .bindTooltip(`📏 ${dist} metros`, { permanent: false, direction: "top" });
+  } else {
+    marker = L.circleMarker([lat, lon], {
+      radius: 8,
+      color: "gray",
+      fillColor: "lightgray",
+      fillOpacity: 0.6
+    });
+    if (shouldAdd) {
+      marker.addTo(map);
+    }
+    marker.bindPopup(`🛒 <b>${name}</b><br>📏 Distancia: ${dist} metros<br><button onclick="calculateRoute(${lat}, ${lon})">📍 Ir aquí</button>`)
+          .bindTooltip(`📏 ${dist} metros`, { permanent: false, direction: "top" });
+  }
+
+  // Se guarda en markers[] para poder filtrar después
+  markers.push({ name, marker });
+}
+
+
+
+    // Función para calcular la ruta
+    function calculateRoute(destLat, destLon) {
+      if (routeControl) {
+        map.removeControl(routeControl);
+      }
+
+      document.getElementById('exitNavigation').style.display = "block";
+
+      // En móviles se colapsa (o se oculta) el panel de instrucciones
+      var isMobile = window.innerWidth <= 768;
+
+      routeControl = L.Routing.control({
+        waypoints: [
+          L.latLng(userLat, userLon),
+          L.latLng(destLat, destLon)
+        ],
+        createMarker: function() { return null; },
+        routeWhileDragging: true,
+        lineOptions: { styles: [{ color: 'blue', weight: 5 }] },
+        // En desktop se mostrará el panel normal, en móvil lo dejamos colapsado
+        collapsed: isMobile 
+      }).addTo(map);
+
+      // Si es móvil, escuchamos el evento para extraer la siguiente instrucción
+      if (isMobile) {
+  routeControl.on('routesfound', function(e) {
+    
+    var mobileInstruction = document.getElementById('mobileInstruction');
+    if (e.routes && e.routes[0] && e.routes[0].instructions && e.routes[0].instructions.length > 0) {
+      var nextInstruction = e.routes[0].instructions[0].text;
+      mobileInstruction.innerHTML = "Próxima instrucción: " + nextInstruction;
+      mobileInstruction.style.display = "block";
+    } else {
+      // Si no hay instrucciones, se oculta el contenedor
+      mobileInstruction.style.display = "none";
+    }
+  });
+}
+
+      updateMarkersVisibility();
+    }
+
+    function updateMarkersVisibilityCustom() {
+      markers = [];
+  var select = document.getElementById('supermarket-filters');
+  // Obtiene un array con los valores seleccionados
+  var selectedOptions = Array.from(select.selectedOptions).map(option => option.value);
+  markers.forEach(({ name, marker }) => {
+    if (selectedOptions.includes(name)) {
+      if (!map.hasLayer(marker)) {
+        map.addLayer(marker);
+      }
+    } else {
+      map.removeLayer(marker);
+    }
+  });
+}
+
+map.addControl(new FilterControl({ position: 'topright' }));
+
+
+document.getElementById('distance').addEventListener('input', function() {
+  distance = this.value;
+  document.getElementById('distanceValue').textContent = distance;
+  
+  if (userMarker) {
+    getSupermarkets(userLat, userLon, distance);
+    
+    // Asegurar que los filtros se apliquen después de cargar los supermercados
+    setTimeout(updateMarkersVisibilityCustom, 1000);
+  }
+});
+
+document.getElementById('exitNavigation').addEventListener('click', function() {
+  if (routeControl) {
+    map.removeControl(routeControl);
+    routeControl = null;
+    document.getElementById('exitNavigation').style.display = "none";
+  }
+});
+
+//cuando entro en navegacion deberia desaparecer los filtros y la distancia, añadir boton de restaurar los filtros
+
+    getLocation();
+  </script>
+</body>
+</html>
