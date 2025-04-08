@@ -3,47 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supermarket Product Recommendation</title>
-    <!-- Bootstrap CSS -->
+    <title>MonCheap - Productos</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <h1 class="text-center mb-4 text-primary">Supermarket Product Recommendation</h1>
-
-        <!-- Formulario para subir nuevos productos -->
-        <form action="/upload" method="POST" enctype="multipart/form-data" class="mb-5">
-            <input type="text" name="name" class="form-control mb-2" placeholder="Nombre del producto" required>
-            <input type="text" name="category" class="form-control mb-2" placeholder="Categoría" required>
-            <input type="file" name="image" class="form-control mb-2" required>
-            <button type="submit" class="btn btn-primary">Subir Producto</button>
-        </form>
-
-        <!-- Mostrar productos -->
-        <div class="row">
-            {% for user_likes in user_likes %}   
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-lg">
-                        {% if product.image %}
-                            <img src="data:image/jpeg;base64,{{ product.image }}" class="card-img-top" alt="{{ product.name }}">
-                        {% else %}
-                            <img src="https://via.placeholder.com/150" class="card-img-top" alt="Imagen no disponible">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ product.name }}</h5>
-                            <p class="card-text">{{ product.category }}</p>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-        <!-- Navigate to login.html -->
-        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-
-    </div>
-    <img src="https://dx7csy7aghu7b.cloudfront.net/prods/7436298.webp" class="card-img-top" alt="Producto Externo" width="50" height="50">
-                    
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap" class="logo-nav">
+                <span class="ms-2 fw-bold">MonCheap</span>
+            </a>
+            
+            <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/likes">
+                            <i class="fas fa-heart"></i> Favoritos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link logout-btn" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Productos</h2>
+
+        <!-- Contenedor de búsqueda y filtros -->
+        <div class="search-filter-container text-center mb-4">
+            <input type="text" class="search-bar" placeholder="Buscar productos...">
+            <select class="filter-dropdown">
+                <option value="all">Todas las categorías</option>
+                <option value="frutas">Frutas</option>
+                <option value="verduras">Verduras</option>
+                <option value="bebidas">Bebidas</option>
+            </select>
+            <button class="filter-button">Filtrar</button>
+        </div>
+
+        <!-- Grid de productos -->
+        <div class="row justify-content-center">
+            <div class="container mt-5">
+                <h2 class="text-center mb-4"> Productos </h2>
+                
+                <div class="row justify-content-center">
+                    {% for product in productos %}   
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
+                                <div class="card shadow-lg product-card">
+                                    <div class="image-container">
+                                        <img src="{{ product.img }}" 
+                                             class="card-img-top product-img" 
+                                             alt="{{ product.nombre }}">
+                                        
+                                        <button class="heart-btn" data-product-id="{{ product.id_producto }}" data-bs-toggle="tooltip" data-bs-placement="top" title="Quitar de favoritos">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">{{ product.nombre }}</h5>
+                                        <p class="card-text text-muted">{{ product.categoria }}</p>
+                                        {% if product.precio is defined and product.precio is not none %}
+                                            <p class="card-text fw-bold">€{{ product.precio | round(2) }}</p>
+                                        {% else %}
+                                            <p class="card-text fw-bold text-muted">Precio no disponible</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    {% else %}
+                        <p>No tienes productos favoritos.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+
 </body>
 </html>

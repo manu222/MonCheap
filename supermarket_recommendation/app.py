@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import abort, render_template, url_for
+
 import mysql.connector
 import base64
 import bcrypt
@@ -10,7 +12,7 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -26,10 +28,9 @@ def get_products():
     cursor.execute("SELECT * FROM producto")
     products = cursor.fetchall()
 
-    # Convertir BLOB a base64 para mostrar en HTML
-    for product in products:
-        if not product['img']:
-            product['img'] = "No image available"
+    for producto in products:
+        if not producto['img']:
+            producto['img'] = "../static/images/placeholder.png"
 
     cursor.close()
     connection.close()
@@ -158,12 +159,22 @@ def likes(user_id):
     user_likes = get_likes(user_id)
     return render_template('likes.html', user_likes=user_likes)
 
-
 @app.route('/')
 def index():
-    products = get_products()
-    return render_template('index.html', products=products)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Si no hay sesión activa, redirigir al login
+    
+    productos = get_products()
+    return render_template('index.html', productos=productos)
 
+
+@app.route('/producto/<int:producto_id>')
+def producto(producto_id):
+    productos = get_products()
+    producto = next((p for p in productos if p["id_producto"] == producto_id), None)
+    if producto is None:
+        abort(404)
+    return render_template('producto.html', producto=producto)
 
 @app.route('/upload', methods=['POST'])
 def upload():
