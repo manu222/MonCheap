@@ -68,4 +68,42 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     });
+
+    // Cargar el boton flotante al cargar la página 
+    crearBotonFlotante();
 });
+
+function crearBotonFlotante() {
+    // Crear el botón
+    const boton = document.createElement("button");
+    boton.classList.add("fab");
+    boton.style.position = "fixed";
+    boton.style.bottom = "20px";
+    boton.style.right = "20px";
+    boton.style.width = "66px";
+    boton.style.height = "66px";
+    boton.style.backgroundColor = "#D29CF4";
+    boton.style.borderRadius = "50%";
+    boton.style.boxShadow = "2px 5px 10px rgba(0, 0, 0, 0.3)";
+    boton.style.display = "flex";
+    boton.style.alignItems = "center";
+    boton.style.justifyContent = "center";
+    boton.style.zIndex = "9999";
+    boton.style.border = "none";
+    boton.style.cursor = "pointer";
+  
+    // Crear la imagen
+    const img = document.createElement("img");
+    img.src = "../images/icono.chat.png"; 
+    img.alt = "Botón";
+    img.style.width = "30px";
+    img.style.height = "30px";
+    img.style.objectFit = "contain";
+  
+    // Insertar imagen dentro del botón
+    boton.appendChild(img);
+  
+    // Agregar el botón al body
+    document.body.appendChild(boton);
+}
+  
