@@ -1,6 +1,8 @@
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-from thefuzz import process
+from .df_tokens import TokenProcessor
+
+# Inicializar el procesador de tokens
+token_processor = TokenProcessor()
 
 '''
 Función que calcula la similitud entre items
@@ -11,22 +13,15 @@ ID: identificador del producto que queremos comparar con el resto.
 Devuelve un diccionario con el id del producto con su similitud.
 '''
 def similitud(productos, id):
-    productos_features = productos.drop(["id"], axis=1)
-    p1_index = productos[productos['id'] == id].index[0]
-    p1_values = productos_features.iloc[p1_index].values.reshape(1, -1)
-    # Calcular la similitud de coseno con todos los productos
-    similitudes = cosine_similarity(p1_values, productos_features)[0]
-
-    # Crear DataFrame con los resultados
-    resultados = pd.DataFrame({
-        'id': productos['id'],
-        'sim': similitudes
-    })
-
-    # Eliminar el producto consultado y ordenar de mayor a menor similitud
-    resultados = resultados[resultados['id'] != id].sort_values(by='sim', ascending=False)
-
-    return resultados.to_dict('records')  # Convertir a lista de diccionarios si se desea mantener el formato original
+    # Cargar y procesar los datos si aún no se ha hecho
+    if token_processor._df is None:
+        token_processor.load_and_process_data(productos)
+    
+    # Obtener productos similares usando el procesador de tokens
+    resultados = token_processor.get_similar_products(id)
+    
+    # Convertir los resultados al formato esperado
+    return [{'id': r['id_producto'], 'sim': r['similarity_score']} for r in resultados]  # Convertir a lista de diccionarios si se desea mantener el formato original
 
 """
 Función que busca las 5 coincidencias más cercanas a un termino en un corpus (un dataframe)
@@ -36,16 +31,15 @@ umbral = umbral de similitud que queremos usar (con 40 funciona bastante bien, p
 
 Devuelve un diccionario con los id y los nombres de los productos más similares.
 """
-def busqueda(palabra,corpus,umbral=40):
-    lista_nombres = corpus['nombre'].values.tolist()
-    coincidencias = process.extract(palabra, lista_nombres, limit=5)  # Encuentra las 5 mejores coincidencias
-
-    # Filtra resultados según el umbral de similitud
-    resultados_filtrados = [match for match, score in coincidencias if score >= umbral]
-
-    resultados_dict = corpus[corpus['nombre'].isin(resultados_filtrados)].to_dict(orient="records")
-
-    return resultados_dict
+def busqueda(palabra, corpus, umbral=0.3):
+    # Cargar y procesar los datos si aún no se ha hecho
+    if token_processor._df is None:
+        token_processor.load_and_process_data(corpus)
+    
+    # Realizar la búsqueda usando el procesador de tokens
+    resultados = token_processor.search_products(palabra, threshold=umbral)
+    
+    return resultados
 
 
 

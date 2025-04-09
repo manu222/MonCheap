@@ -12,7 +12,7 @@ app.secret_key = 'supersecretkey'  # Añade una clave secreta para manejar las s
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'root',
     'database': 'moncheap'
 }
 
@@ -25,12 +25,36 @@ def get_db_connection():
 def get_products():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM producto")
+    query = """
+    SELECT p.id_producto,p.nombre,p.marca,p.categoria,p.img,p.kcal,
+    p.grasas,p.grasas_saturadas,p.proteinas,p.hidratos_carbono,p.azucares,p.sal,
+    p.visitas,pr.supermercado,pr.link,pr.precio,pr.precio_oferta,pr.precio_unidad
+FROM 
+    producto p
+LEFT JOIN 
+    precios pr ON p.id_producto = pr.id_producto
+ORDER BY 
+    p.nombre, pr.supermercado;
+    """
+    cursor.execute(query)
     products = cursor.fetchall()
 
     for producto in products:
         if not producto['img']:
-            producto['img'] = "../static/images/placeholder.png"
+            producto['img'] = url_for('static', filename='images/placeholder.png')
+        else:
+            # Si la imagen es un BLOB, convertirla a una URL de datos base64
+            try:
+                # Verificar si ya es una URL
+                if isinstance(producto['img'], bytes):
+                    # Convertir BLOB a base64
+                    encoded_img = base64.b64encode(producto['img']).decode('utf-8')
+                    producto['img'] = f"data:image/jpeg;base64,{encoded_img}"
+                elif not producto['img'].startswith(('http', 'https', 'data:', '/static')):
+                    # Si no es una URL válida, usar la imagen de placeholder
+                    producto['img'] = url_for('static', filename='images/placeholder.png')
+            except:
+                producto['img'] = url_for('static', filename='images/placeholder.png')
 
     cursor.close()
     connection.close()
@@ -61,7 +85,7 @@ def login():
             session['user_id'] = user['id']  # Guardar el user_id en la sesión
             session['user_name'] = user['nombre']
             session['user_mail'] = user['gmail']
-            return redirect(url_for('likes', user_id=user['id']))
+            return redirect(url_for('likes'))
         else:
             return render_template('login.html', error='Usuario o contraseña incorrectos')
 
@@ -147,25 +171,72 @@ def get_likes(user_id):
 
     for like in likes:
         if not like['img']:
-            like['img'] = "../static/images/placeholder.png"
+            like['img'] = url_for('static', filename='images/placeholder.png')
+        else:
+            # Si la imagen es un BLOB, convertirla a una URL de datos base64
+            try:
+                # Verificar si ya es una URL
+                if isinstance(like['img'], bytes):
+                    # Convertir BLOB a base64
+                    encoded_img = base64.b64encode(like['img']).decode('utf-8')
+                    like['img'] = f"data:image/jpeg;base64,{encoded_img}"
+                elif not like['img'].startswith(('http', 'https', 'data:', '/static')):
+                    # Si no es una URL válida, usar la imagen de placeholder
+                    like['img'] = url_for('static', filename='images/placeholder.png')
+            except:
+                like['img'] = url_for('static', filename='images/placeholder.png')
 
     cursor.close()
     connection.close()
     return likes
 
 
-@app.route('/likes/<int:user_id>')
-def likes(user_id):
-    user_likes = get_likes(user_id)
+@app.route('/likes')
+def likes():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Redirigir al login si no hay sesión activa
+    user_likes = get_likes(session['user_id'])
     return render_template('likes.html', user_likes=user_likes)
+
+@app.route('/search')
+def search():
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify([])
+    
+    # Importar las funciones necesarias
+    from static.funcionesMoncheap import busqueda
+    from static.df_tokens import TokenProcessor
+    import pandas as pd
+    
+    # Obtener todos los productos
+    productos = get_products()
+    # Convertir a DataFrame
+    df = pd.DataFrame(productos)
+    
+    # Realizar la búsqueda usando el sistema de tokens de df_tokens.py y funcionesMoncheap.py
+    # El token_processor se inicializa en funcionesMoncheap.py y utiliza df_tokens.csv
+    resultados = busqueda(query, df, umbral=0.3)
+    
+    return jsonify(resultados)
 
 @app.route('/')
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))  # Si no hay sesión activa, redirigir al login
     
+    # Obtener todos los productos
     productos = get_products()
-    return render_template('index.html', productos=productos)
+    
+    # Obtener los IDs de los productos favoritos del usuario
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT id_producto FROM likes WHERE id_user = %s", (session['user_id'],))
+    favoritos = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    connection.close()
+    
+    return render_template('index.html', productos=productos, favoritos=favoritos)
 
 
 @app.route('/producto/<int:producto_id>')
@@ -235,6 +306,32 @@ def toggle_favorite(product_id):
 def logout():
     session.pop('user_id', None)  # Eliminar el user_id de la sesión
     return redirect(url_for('login'))
+
+
+# Rutas para el chatbot
+@app.route('/chatbot')
+def chatbot():
+    # Renderizar la plantilla del chatbot
+    return render_template('chatbot_popup.html')
+
+@app.route('/chatbot/message', methods=['POST'])
+def chatbot_message():
+    # Obtener el mensaje del usuario
+    message = request.json.get('message', '')
+    
+    if not message:
+        return jsonify({'error': 'No se proporcionó un mensaje'}), 400
+    
+    # Importar el chatbot y obtener una respuesta
+    from static.chatbot import get_chatbot_instance
+    
+    # Obtener la instancia del chatbot (local o Ollama según disponibilidad)
+    chatbot = get_chatbot_instance()
+    
+    # Obtener la respuesta del chatbot
+    response = chatbot.get_response(message)
+    
+    return jsonify({'response': response})
 
 
 if __name__ == '__main__':

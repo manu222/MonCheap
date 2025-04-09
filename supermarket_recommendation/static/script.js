@@ -69,6 +69,124 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Implementar búsqueda en tiempo real usando el sistema de tokens de funcionesMoncheap.py y df_tokens.py
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const productContainer = document.getElementById('productContainer');
+    let searchTimeout;
+
+    if (searchInput) {
+        // Eliminar el evento de clic del botón de búsqueda ya que haremos búsqueda en tiempo real
+        if (searchButton) {
+            searchButton.style.display = 'none'; // Ocultar el botón de búsqueda ya que no es necesario
+        }
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            
+            // Limpiar el timeout anterior
+            clearTimeout(searchTimeout);
+            
+            // Esperar 300ms después de que el usuario deje de escribir
+            searchTimeout = setTimeout(() => {
+                if (searchTerm === '') {
+                    // Si la búsqueda está vacía, mostrar todos los productos
+                    document.querySelectorAll('.col-md-4.col-lg-3.mb-4').forEach(card => {
+                        card.style.display = '';
+                    });
+                    return;
+                }
+
+                // Mostrar indicador de carga
+                productContainer.innerHTML = '<div class="text-center w-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
+
+                // Realizar la búsqueda usando el endpoint que utiliza funcionesMoncheap.py y df_tokens.py
+                fetch(`/search?q=${encodeURIComponent(searchTerm)}`)
+                    .then(response => response.json())
+                    .then(products => {
+                        if (products.length === 0) {
+                            // Si no hay resultados, mostrar mensaje
+                            productContainer.innerHTML = '<div class="text-center w-100"><p>No se encontraron productos que coincidan con tu búsqueda.</p></div>';
+                            return;
+                        }
+
+                        // Crear HTML para los productos encontrados
+                        let productsHTML = '';
+                        products.forEach(product => {
+                            // Determinar si el producto está en favoritos
+                            const isFavorite = window.favoritos && window.favoritos.includes(product.id_producto);
+                            const heartSvg = isFavorite ? favorite : notfavorite;
+                            const heartTitle = isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos';
+                            
+                            // Formatear el precio si existe
+                            let precioHTML = '';
+                            if (product.precio !== undefined && product.precio !== null) {
+                                precioHTML = `<p class="card-text fw-bold">€${parseFloat(product.precio).toFixed(2)}</p>`;
+                            } else {
+                                precioHTML = `<p class="card-text fw-bold text-muted">Precio no disponible</p>`;
+                            }
+
+                            productsHTML += `
+                            <div class="col-md-4 col-lg-3 mb-4">
+                                <div class="card shadow-lg product-card">
+                                    <div class="image-container">
+                                        <a href="/producto/${product.id_producto}" class="text-decoration-none text-dark">
+                                            <img src="${product.img}" class="card-img-top product-img" alt="${product.nombre}">
+                                        </a>
+                                        <button class="heart-btn" data-product-id="${product.id_producto}" data-bs-toggle="tooltip" data-bs-placement="top" title="${heartTitle}">
+                                            ${heartSvg}
+                                        </button>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <a href="/producto/${product.id_producto}" class="text-decoration-none text-dark">
+                                            <h5 class="card-title">${product.nombre}</h5>
+                                            <p class="card-text text-muted">${product.categoria || ''}</p>
+                                            ${precioHTML}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+
+                        // Actualizar el contenedor de productos
+                        productContainer.innerHTML = productsHTML;
+
+                        // Reinicializar los tooltips para los nuevos botones
+                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+
+                        // Agregar eventos a los nuevos botones de corazón
+                        document.querySelectorAll(".heart-btn").forEach(button => {
+                            button.addEventListener("click", function() {
+                                let productId = this.getAttribute("data-product-id");
+                                let isFavorited = this.innerHTML.trim() === favorite.trim();
+
+                                if (isFavorited) {
+                                    this.innerHTML = notfavorite;
+                                    this.setAttribute("title", "Añadir a favoritos");
+                                } else {
+                                    this.innerHTML = favorite;
+                                    this.setAttribute("title", "Quitar de favoritos");
+                                }
+
+                                fetch(`/toggle_favorite/${productId}`, { method: "POST" })
+                                    .then(response => response.json())
+                                    .catch(error => {
+                                        console.error("Error en la solicitud:", error);
+                                    });
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error en la búsqueda:', error);
+                        productContainer.innerHTML = '<div class="text-center w-100"><p>Error al realizar la búsqueda. Inténtalo de nuevo.</p></div>';
+                    });
+            }, 300);
+        });
+    }
+
     // Cargar el boton flotante al cargar la página 
     crearBotonFlotante();
 });
@@ -91,19 +209,75 @@ function crearBotonFlotante() {
     boton.style.zIndex = "9999";
     boton.style.border = "none";
     boton.style.cursor = "pointer";
+    boton.style.transition = "transform 0.3s ease";
   
     // Crear la imagen
     const img = document.createElement("img");
-    img.src = "../images/icono.chat.png"; 
-    img.alt = "Botón";
+    img.src = "/static/images/logo.png"; 
+    img.alt = "Botón de chat";
     img.style.width = "30px";
     img.style.height = "30px";
     img.style.objectFit = "contain";
   
     // Insertar imagen dentro del botón
     boton.appendChild(img);
+    
+    // Efecto hover
+    boton.addEventListener("mouseover", function() {
+        this.style.transform = "scale(1.1)";
+    });
+    
+    boton.addEventListener("mouseout", function() {
+        this.style.transform = "scale(1)";
+    });
+    
+    // Agregar evento de clic para abrir el chatbot
+    boton.addEventListener("click", function() {
+        abrirChatbot();
+    });
   
     // Agregar el botón al body
     document.body.appendChild(boton);
+}
+
+// Función para abrir el chatbot en un popup
+function abrirChatbot() {
+    // Crear el contenedor del popup
+    const popupContainer = document.createElement("div");
+    popupContainer.id = "popupContainer";
+    popupContainer.style.position = "fixed";
+    popupContainer.style.top = "0";
+    popupContainer.style.left = "0";
+    popupContainer.style.width = "100%";
+    popupContainer.style.height = "100%";
+    popupContainer.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    popupContainer.style.display = "flex";
+    popupContainer.style.justifyContent = "center";
+    popupContainer.style.alignItems = "center";
+    popupContainer.style.zIndex = "10000";
+
+    // Crear el iframe para cargar el chatbot
+    const iframe = document.createElement("iframe");
+    iframe.src = "/chatbot";
+    iframe.style.width = "90%";
+    iframe.style.maxWidth = "400px";
+    iframe.style.height = "80%";
+    iframe.style.maxHeight = "600px";
+    iframe.style.border = "none";
+    iframe.style.borderRadius = "15px";
+    iframe.style.boxShadow = "0 5px 15px rgba(0, 0, 0, 0.3)";
+
+    // Agregar el iframe al contenedor
+    popupContainer.appendChild(iframe);
+
+    // Agregar evento para cerrar el popup al hacer clic fuera del iframe
+    popupContainer.addEventListener("click", function(event) {
+        if (event.target === popupContainer) {
+            document.body.removeChild(popupContainer);
+        }
+    });
+
+    // Agregar el contenedor al body
+    document.body.appendChild(popupContainer);
 }
   

@@ -113,6 +113,16 @@
             font-size: 24px;
             color: black;
         }
+        
+        .loading-message {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
 
     </style>
 </head>
@@ -152,11 +162,57 @@
             let chatBox = document.getElementById("chat-box");
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Simulación de respuesta del bot
-            setTimeout(() => {
-                // TODO : Llamada a la API de Ollama
-                addBotMessage("¡Hola! Soy un bot y estoy aprendiendo a conversar. Por ahora solo sé responder con este mensaje.");
-            }, 500);
+            // Mostrar indicador de carga
+            let loadingMessage = document.createElement("div");
+            loadingMessage.classList.add("message", "bot-message", "loading-message");
+            loadingMessage.id = "loading-message";
+            
+            // Crear la imagen
+            let loadingImg = document.createElement("img");
+            loadingImg.src = "/static/images/logo.png";
+            loadingImg.alt = "Moncheap Bot";
+            
+            // Crear el texto del mensaje
+            let loadingText = document.createElement("span");
+            loadingText.textContent = "Pensando...";
+            
+            // Agregar la imagen y el texto al contenedor de mensaje
+            loadingMessage.appendChild(loadingImg);
+            loadingMessage.appendChild(loadingText);
+            
+            document.getElementById("messages").appendChild(loadingMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Enviar mensaje al servidor
+            fetch('/chatbot/message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: messageText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Eliminar el mensaje de carga
+                const loadingElement = document.getElementById("loading-message");
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                // Mostrar la respuesta del chatbot
+                addBotMessage(data.response);
+            })
+            .catch(error => {
+                // Eliminar el mensaje de carga
+                const loadingElement = document.getElementById("loading-message");
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                // Mostrar mensaje de error
+                addBotMessage("Lo siento, ha ocurrido un error al procesar tu mensaje. Por favor, inténtalo de nuevo más tarde.");
+                console.error('Error:', error);
+            });
         }
 
         function addBotMessage(texto) {
@@ -165,8 +221,8 @@
             message.classList.add("message", "bot-message");
 
             // Crear la imagen
-            let img = document.createElement("img");
-            img.src = "MonCheap/supermarket_recommendation/static/images/logo.png"; // Asegúrate de que el archivo está en la misma carpeta
+             let img = document.createElement("img");
+            img.src = "/static/images/logo.png"; // Ruta correcta a la imagen del logo
             img.alt = "Moncheap Bot";
 
             // Crear el texto del mensaje
