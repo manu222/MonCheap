@@ -66,7 +66,7 @@
                             <div class="card shadow-lg product-card">
                                 <div class="image-container">
                                     <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
-                                        <img src="{{ product.img }}" 
+                                        <img src="{{ product.img if product.img else '' }}" onerror="this.classList.add('error')" 
                                              class="card-img-top product-img" 
                                              alt="{{ product.nombre }}">
                                     </a>
