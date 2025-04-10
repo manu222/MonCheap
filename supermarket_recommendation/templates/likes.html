@@ -15,7 +15,7 @@
 <body>
     <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="/">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap" class="logo-nav">
                 <span class="ms-2 fw-bold">MonCheap</span>
             </a>
@@ -32,13 +32,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/likes">
+                        <a class="nav-link active" href="/likes">
                             <i class="fas fa-heart"></i> Favoritos
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link logout-btn" href="/mapa">
+                        <a class="nav-link" href="/mapa">
                             <i class="fas fa-map"></i> Mapa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/user">
+                            <i class="fas fa-user"></i> Perfil
                         </a>
                     </li>
                     <li class="nav-item">
@@ -51,10 +56,17 @@
         </div>
     </nav>
     
-    <div class="container mt-5">
+    <div class="container mt-5 pt-5">
         <h2 class="text-center mb-4">Tus Productos Favoritos</h2>
         
-        <div class="row justify-content-center">
+        <!-- Contenedor de búsqueda y filtros 
+        <div class="search-filter-container text-center mb-4">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Buscar productos...">
+            <button class="filter-button" id="searchButton">Buscar</button>
+        </div>-->
+
+        <!-- Grid de productos -->
+        <div class="row justify-content-center" id="productContainer">
             {% for product in user_likes %}   
                 <div class="col-md-4 col-lg-3 mb-4">
                     <div class="card shadow-lg product-card">
@@ -63,7 +75,7 @@
 
                             
                                 <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
-                                <img src="{{ product.img }}" 
+                                <img src="{{ product.img if product.img else '' }}" onerror="this.classList.add('error')" 
                                      class="card-img-top product-img" 
                                      alt="{{ product.nombre }}">
                             </a>
@@ -79,7 +91,11 @@
                             <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
                                 <h5 class="card-title">{{ product.nombre }}</h5>
                                 <p class="card-text text-muted">{{ product.categoria }}</p>
-                                <p class="card-text fw-bold">€{{ product.precio | round(2) }}</p>
+                                {% if product.precio is defined and product.precio is not none %}
+                                            <p class="card-text fw-bold">€{{ product.precio | round(2) }}</p>
+                                        {% else %}
+                                            <p class="card-text fw-bold text-muted">Precio no disponible</p>
+                                        {% endif %}
                             </a>
                         </div>
                     </div>

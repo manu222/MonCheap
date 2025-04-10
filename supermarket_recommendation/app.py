@@ -12,7 +12,7 @@ app.secret_key = 'supersecretkey'
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -135,7 +135,36 @@ def register():
 
 @app.route('/user', methods=['GET', 'POST'])
 def user():
-    return render_template('user.html')
+    success = request.args.get('success', '')
+    error = request.args.get('error', '')
+    return render_template('user.html', success=success, error=error)
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    current_password = request.form['current_password']
+    new_password = request.form['new_password']
+    
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT contraseña FROM usuario WHERE id = %s", (session['user_id'],))
+    user = cursor.fetchone()
+    
+    if not user or not bcrypt.checkpw(current_password.encode('utf-8'), user['contraseña'].encode('utf-8')):
+        cursor.close()
+        connection.close()
+        return redirect(url_for('user', error='La contraseña actual es incorrecta'))
+    
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    cursor.execute("UPDATE usuario SET contraseña = %s WHERE id = %s", 
+                  (hashed_password.decode('utf-8'), session['user_id']))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    
+    return redirect(url_for('user', success='Contraseña actualizada correctamente'))
 
 @app.route('/user_update', methods=['POST'])
 def user_update():
@@ -236,24 +265,6 @@ def search():
     
     return jsonify(resultados)
 
-# La ruta '/' ya está definida arriba, esta es una duplicación que causa el error
-# @app.route('/')
-# def index():
-#     if 'user_id' not in session:
-#         return redirect(url_for('login'))  # Si no hay sesión activa, redirigir al login
-#     
-#     # Obtener todos los productos
-#     productos = get_products()
-#     
-#     # Obtener los IDs de los productos favoritos del usuario
-#     connection = get_db_connection()
-#     cursor = connection.cursor()
-#     cursor.execute("SELECT id_producto FROM likes WHERE id_user = %s", (session['user_id'],))
-#     favoritos = [row[0] for row in cursor.fetchall()]
-#     cursor.close()
-#     connection.close()
-#     
-#     return render_template('index.html', productos=productos, favoritos=favoritos)
 @app.route('/mapa', )
 def mapa():
     return render_template('mapa.html')
