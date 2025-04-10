@@ -12,7 +12,7 @@ app.secret_key = 'supersecretkey'
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'root',
     'database': 'moncheap'
 }
 
