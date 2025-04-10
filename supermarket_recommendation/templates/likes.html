@@ -62,9 +62,11 @@
                             
 
                             
+                                <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
                                 <img src="{{ product.img }}" 
                                      class="card-img-top product-img" 
                                      alt="{{ product.nombre }}">
+                            </a>
                            
                             
                             <button class="heart-btn" data-product-id="{{ product.id_producto }}" data-bs-toggle="tooltip" data-bs-placement="top" title="Quitar de favoritos">
@@ -74,9 +76,11 @@
                         </div>
                         
                         <div class="card-body text-center">
-                            <h5 class="card-title">{{ product.nombre }}</h5>
-                            <p class="card-text text-muted">{{ product.categoria }}</p>
-                            <p class="card-text fw-bold">€{{ product.precio | round(2) }}</p>
+                            <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
+                                <h5 class="card-title">{{ product.nombre }}</h5>
+                                <p class="card-text text-muted">{{ product.categoria }}</p>
+                                <p class="card-text fw-bold">€{{ product.precio | round(2) }}</p>
+                            </a>
                         </div>
                     </div>
                 </div>

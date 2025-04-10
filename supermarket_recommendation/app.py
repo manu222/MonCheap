@@ -103,7 +103,7 @@ def login():
             session['user_id'] = user['id']
             session['user_name'] = user['nombre']
             session['user_mail'] = user['gmail']
-            return redirect(url_for('likes'))
+            return redirect(url_for('index'))
         return render_template('login.html', error='Usuario o contraseña incorrectos')
     return render_template('login.html')
 
@@ -236,23 +236,24 @@ def search():
     
     return jsonify(resultados)
 
-@app.route('/')
-def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))  # Si no hay sesión activa, redirigir al login
-    
-    # Obtener todos los productos
-    productos = get_products()
-    
-    # Obtener los IDs de los productos favoritos del usuario
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT id_producto FROM likes WHERE id_user = %s", (session['user_id'],))
-    favoritos = [row[0] for row in cursor.fetchall()]
-    cursor.close()
-    connection.close()
-    
-    return render_template('login.html', productos=productos, favoritos=favoritos)
+# La ruta '/' ya está definida arriba, esta es una duplicación que causa el error
+# @app.route('/')
+# def index():
+#     if 'user_id' not in session:
+#         return redirect(url_for('login'))  # Si no hay sesión activa, redirigir al login
+#     
+#     # Obtener todos los productos
+#     productos = get_products()
+#     
+#     # Obtener los IDs de los productos favoritos del usuario
+#     connection = get_db_connection()
+#     cursor = connection.cursor()
+#     cursor.execute("SELECT id_producto FROM likes WHERE id_user = %s", (session['user_id'],))
+#     favoritos = [row[0] for row in cursor.fetchall()]
+#     cursor.close()
+#     connection.close()
+#     
+#     return render_template('index.html', productos=productos, favoritos=favoritos)
 @app.route('/mapa', )
 def mapa():
     return render_template('mapa.html')
