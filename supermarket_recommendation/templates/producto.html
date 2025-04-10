@@ -14,7 +14,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center" href="/">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap" class="logo-nav">
                 <span class="ms-2 fw-bold">MonCheap</span>
             </a>
@@ -36,8 +36,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link logout-btn" href="/mapa">
+                        <a class="nav-link" href="/mapa">
                             <i class="fas fa-map"></i> Mapa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/user">
+                            <i class="fas fa-user"></i> Perfil
                         </a>
                     </li>
                     <li class="nav-item">
