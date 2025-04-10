@@ -239,7 +239,7 @@
         }
         
         function closePopup() {
-            window.parent.document.getElementById("popupContainer").style.display = "none";
+            window.parent.postMessage("cerrarChatbot", "*");
         }
     </script>
 </body>

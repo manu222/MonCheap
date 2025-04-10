@@ -47,42 +47,33 @@ function crearBotonFlotante() {
     document.body.appendChild(boton);
 }
 
-// Función para abrir el chatbot en un popup
 function abrirChatbot() {
+    // Ocultar el botón flotante
+    const boton = document.querySelector(".fab");
+    if (boton) boton.style.display = "none";
+
     // Crear el contenedor del popup
     const popupContainer = document.createElement("div");
     popupContainer.id = "popupContainer";
     popupContainer.style.position = "fixed";
-    popupContainer.style.top = "0";
-    popupContainer.style.left = "0";
-    popupContainer.style.width = "100%";
-    popupContainer.style.height = "100%";
-    popupContainer.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    popupContainer.style.display = "flex";
-    popupContainer.style.justifyContent = "center";
-    popupContainer.style.alignItems = "center";
+    popupContainer.style.bottom = "20px"; // Misma distancia que tenía el botón
+    popupContainer.style.right = "20px";
     popupContainer.style.zIndex = "10000";
 
     // Crear el iframe para cargar el chatbot
     const iframe = document.createElement("iframe");
     iframe.src = "/chatbot";
-    iframe.style.width = "90%";
+    iframe.style.width = "90vw";
     iframe.style.maxWidth = "400px";
-    iframe.style.height = "80%";
+    iframe.style.height = "80vh";
     iframe.style.maxHeight = "600px";
     iframe.style.border = "none";
     iframe.style.borderRadius = "15px";
     iframe.style.boxShadow = "0 5px 15px rgba(0, 0, 0, 0.3)";
+    iframe.style.backgroundColor = "white";
 
     // Agregar el iframe al contenedor
     popupContainer.appendChild(iframe);
-
-    // Agregar evento para cerrar el popup al hacer clic fuera del iframe
-    popupContainer.addEventListener("click", function(event) {
-        if (event.target === popupContainer) {
-            document.body.removeChild(popupContainer);
-        }
-    });
 
     // Agregar el contenedor al body
     document.body.appendChild(popupContainer);
@@ -90,4 +81,15 @@ function abrirChatbot() {
 
 document.addEventListener("DOMContentLoaded", () => {
     crearBotonFlotante();
+
+    window.addEventListener("message", function(event) {
+        if (event.data === "cerrarChatbot") {
+            const popup = document.getElementById("popupContainer");
+            if (popup) popup.remove();
+    
+            // Mostrar el botón flotante otra vez
+            const boton = document.querySelector(".fab");
+            if (boton) boton.style.display = "flex"; // o "block", pero "flex" mantiene el centrado del icono
+        }
+    });    
 })
