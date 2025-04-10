@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producto - MUSTELA</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap" class="logo-nav">
+                <span class="ms-2 fw-bold">MonCheap</span>
+            </a>
+            
+            <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/likes">
+                            <i class="fas fa-heart"></i> Favoritos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link logout-btn" href="/mapa">
+                            <i class="fas fa-map"></i> Mapa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link logout-btn" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="product-container">
+        <div class="product-wrapper">
+            <div class="product-image">
+                <img src="static/images/mustela-spray.jpg" alt="Agua para peinar MUSTELA" class="product-img">
+            </div>
+            <div class="product-details">
+                <h1 class="title">Agua para peinar refrescante MUSTELA, spray 200 ml</h1>
+                <p class="price">Precio: <strong>€7.35</strong></p>
+                <h2 class="subtitle">Descripción</h2>
+                <p>Producto refrescante para peinar, ideal para bebés y niños. Ayuda a desenredar el cabello y aporta frescor con aroma agradable.</p>
+                <h2 class="subtitle">Supermercado</h2>
+                <p>Eroski</p>
+                <h2 class="subtitle">Valores Nutricionales</h2>
+                <canvas id="nutritionChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            labels: ['Kcal', 'Grasas', 'Grasas Saturadas', 'Proteínas', 'Hidratos de Carbono', 'Azúcares', 'Sal'],
+            datasets: [{
+                label: 'Valores Nutricionales',
+                data: [0, 0, 0, 0, 0, 0, 0], // Este producto no tiene nutrientes, pero se puede modificar
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#81C784', '#BA68C8', '#FFD54F', '#4DB6AC'
+                ]
+            }]
+        };
+
+        const config = {
+            type: 'pie',
+            data: data,
+        };
+
+        const nutritionChart = new Chart(
+            document.getElementById('nutritionChart'),
+            config
+        );
+    </script>
+</body>
+</html>
