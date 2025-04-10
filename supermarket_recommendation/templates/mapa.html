@@ -168,7 +168,7 @@ var FilterControl = L.Control.extend({
   }
 });
 
-
+    var markers = [];
     var map = L.map('map').setView([40.4168, -3.7038], 13);
 
 
@@ -196,7 +196,7 @@ var FilterControl = L.Control.extend({
       "BM": "/static/images/logosSupers/logotipo_bm.png",
       "Masymas": "/static/images/logosSupers/logomasymas.png",
       "Hiperber": "/static/images/logosSupers/logoHiperber.png"
-    };
+   };
 
     function getLocation() {
       if (navigator.geolocation) {
@@ -238,11 +238,8 @@ var FilterControl = L.Control.extend({
     }
 
     function getSupermarkets(lat, lon, distance) {
-  map.eachLayer(function(layer) {
-    if (layer instanceof L.Marker && layer !== userMarker) {
-      map.removeLayer(layer);
-    }
-  });
+  // Limpiar marcadores anteriores del mapa y del array
+  markers.forEach(({ marker }) => map.removeLayer(marker));
   markers = [];
 
   var overpassQuery = `
@@ -265,12 +262,11 @@ var FilterControl = L.Control.extend({
           addSupermarketMarker(element.lat, element.lon, name, dist);
         }
       });
-      // Vuelve a aplicar los filtros después de añadir los nuevos marcadores
-      updateMarkersVisibility();
+
+     updateMarkersVisibilityCustom();
     })
     .catch(err => console.error("Error obteniendo supermercados:", err));
 }
-
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
       var R = 6371e3;
@@ -370,17 +366,18 @@ var FilterControl = L.Control.extend({
     }
 
     function updateMarkersVisibilityCustom() {
-      markers = [];
   var select = document.getElementById('supermarket-filters');
-  // Obtiene un array con los valores seleccionados
   var selectedOptions = Array.from(select.selectedOptions).map(option => option.value);
+
   markers.forEach(({ name, marker }) => {
     if (selectedOptions.includes(name)) {
       if (!map.hasLayer(marker)) {
         map.addLayer(marker);
       }
     } else {
-      map.removeLayer(marker);
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
     }
   });
 }
