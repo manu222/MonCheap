@@ -236,7 +236,7 @@ def index():
     cursor.close()
     connection.close()
     
-    return render_template('index.html', productos=productos, favoritos=favoritos)
+    return render_template('login.html', productos=productos, favoritos=favoritos)
 
 
 @app.route('/producto/<int:producto_id>')
