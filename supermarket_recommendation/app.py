@@ -4,15 +4,17 @@ import base64
 import bcrypt
 import pandas as pd
 from static.df_tokens import TokenProcessor
+from langchain_ollama import OllamaLLM
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
+model = OllamaLLM(model="llama3")
 
 # Configuración de la base de datos MySQL
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -268,6 +270,18 @@ def search():
 @app.route('/mapa', )
 def mapa():
     return render_template('mapa.html')
+
+@app.route('/chatbot')
+def chatbot():
+    return render_template('chatbot_popup.html')
+
+@app.route('/chatbot/answer', methods=['POST'])
+def chat_api():
+    user_message = request.get_data(as_text=True)
+    if not user_message: return "Mensaje vacío", 400
+
+    respuesta = model.invoke(input=user_message)
+    return str(respuesta)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

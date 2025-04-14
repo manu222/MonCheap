@@ -141,30 +141,36 @@
     </div>
 
     <script>
-      function sendMessage() {
+      async function sendMessage() {
         let input = document.getElementById("message-input");
         let messageText = input.value.trim();
-
+    
         if (messageText === "") return;
-
+    
         let message = document.createElement("div");
         message.classList.add("message", "user-message");
         message.textContent = messageText;
-
+    
         document.getElementById("messages").appendChild(message);
         input.value = "";
-
+    
         // Auto-scroll hacia abajo
         let chatBox = document.getElementById("chat-box");
         chatBox.scrollTop = chatBox.scrollHeight;
-
-        // Simulación de respuesta del bot
-        setTimeout(() => {
-          // TODO : Llamada a la API de Ollama
-          addBotMessage(
-            "¡Hola! Soy un bot y estoy aprendiendo a conversar. Por ahora solo sé responder con este mensaje."
-          );
-        }, 500);
+    
+        // NUEVA llamada al backend con fetch
+        try {
+          const res = await fetch("/chatbot/answer", {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: messageText,
+          });
+    
+          const botResponse = await res.text();
+          addBotMessage(botResponse);
+        } catch (err) {
+          addBotMessage("Error de conexión con el modelo.");
+        }
       }
 
       function addBotMessage(texto) {
