@@ -269,19 +269,5 @@ def search():
 def mapa():
     return render_template('mapa.html')
 
-@app.route('/chatbot')
-def chatbot():
-    return render_template('chatbot_popup.html')
-
-@app.route('/chatbot/message', methods=['POST'])
-def chatbot_message():
-    message = request.json.get('message', '')
-    if not message:
-        return jsonify({'error': 'No se proporcionó un mensaje'}), 400
-    from static.chatbot import get_chatbot_instance
-    chatbot = get_chatbot_instance()
-    response = chatbot.get_response(message)
-    return jsonify({'response': response})
-
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
