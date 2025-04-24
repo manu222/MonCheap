@@ -5,6 +5,7 @@ import bcrypt
 import pandas as pd
 from static.df_tokens import TokenProcessor
 from langchain_ollama import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -280,8 +281,17 @@ def chat_api():
     user_message = request.get_data(as_text=True)
     if not user_message: return "Mensaje vacío", 400
 
-    respuesta = model.invoke(input=user_message)
-    return str(respuesta)
+    template = 
+    """
+        Eres un asistente virtual para una pagina de comparacion de precios de supermercados
+        y productos. Tu tarea es ayudar a los usuarios a encontrar el supermercado mas barato para un producto en concreto.
+        Pregunta del usuario: {user_message}
+    """
+
+    prompt = ChatPromptTemplate.from_template(template)
+    chain = prompt | model
+    result = chain.invoke({"user_message": user_message})
+    return result
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
