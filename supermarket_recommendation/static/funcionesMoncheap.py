@@ -35,9 +35,15 @@ umbral = umbral de similitud que queremos usar (con 40 funciona bastante bien, p
 
 Devuelve un diccionario con los id y los nombres de los productos más similares.
 """
-def busqueda(palabra,corpus,umbral=40):
+def busqueda(palabra,corpus,umbral=20):
     lista_nombres = corpus['nombre'].values.tolist()
-    coincidencias = process.extract(palabra, lista_nombres, limit=5)  # Encuentra las 5 mejores coincidencias
+
+    if len(palabra) <= 2:
+        resultados_prefijo = [nombre for nombre in lista_nombres if nombre.lower().startswith(palabra.lower())]
+        resultados_dict = corpus[corpus['nombre'].isin(resultados_prefijo)].to_dict(orient="records")
+        return resultados_dict
+
+    coincidencias = process.extract(palabra, lista_nombres, limit=50)
  
     # Filtra resultados según el umbral de similitud
     resultados_filtrados = [match for match, score in coincidencias if score >= umbral]

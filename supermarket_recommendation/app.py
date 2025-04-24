@@ -3,7 +3,8 @@ import mysql.connector
 import base64
 import bcrypt
 import pandas as pd
-from static.df_tokens import TokenProcessor
+from static.funcionesMoncheap import busqueda,similitud
+import pandas as pd
 from langchain_ollama import OllamaLLM
 
 app = Flask(__name__)
@@ -214,8 +215,22 @@ def producto(producto_id):
     producto = next((p for p in productos if p['id_producto'] == producto_id), None)
     if not producto:
         abort(404)
+    
     ''' historical_prices = get_historical_prices(producto_id)'''
-    return render_template('producto.html', producto=producto)
+    
+    # Obtener productos similares
+    df_productos = pd.read_csv("./static/df_tokens")
+
+    # Convertir vectores de productos (simplificado - deberías usar características relevantes)
+    # Aquí asumo que usarás las características disponibles para calcular la similitud
+    productos_similares_data = similitud(df_productos, producto_id)
+    
+    # Limitar a 4 productos similares
+    productos_similares_ids = [item['id'] for item in productos_similares_data[:4]]
+    productos_similares = [p for p in productos if p['id_producto'] in productos_similares_ids]
+    
+    return render_template('producto.html', producto=producto, productos_similares=productos_similares)
+    
 '''
 def get_historical_prices(producto_id):
     connection = get_db_connection()
@@ -250,12 +265,7 @@ def search():
     query = request.args.get('q', '')
     if not query:
         return jsonify([])
-    
-    # Importar las funciones necesarias
-    from static.funcionesMoncheap import busqueda
-    from static.df_tokens import TokenProcessor
-    import pandas as pd
-    
+
     # Obtener todos los productos
     productos = get_products()
     # Convertir a DataFrame
@@ -263,7 +273,7 @@ def search():
     
     # Realizar la búsqueda usando el sistema de tokens de df_tokens.py y funcionesMoncheap.py
     # El token_processor se inicializa en funcionesMoncheap.py y utiliza df_tokens.csv
-    resultados = busqueda(query, df, umbral=0.3)
+    resultados = busqueda(query, df)
     
     return jsonify(resultados)
 
