@@ -6,10 +6,12 @@ import pandas as pd
 from static.funcionesMoncheap import busqueda,similitud
 import pandas as pd
 from langchain_ollama import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 model = OllamaLLM(model="llama3.2")
+productos_df = pd.read_csv('productos.csv')
 
 # Configuración de la base de datos MySQL
 db_config = {
@@ -288,10 +290,41 @@ def chatbot():
 @app.route('/chatbot/answer', methods=['POST'])
 def chat_api():
     user_message = request.get_data(as_text=True)
-    if not user_message: return "Mensaje vacío", 400
+    if not user_message:
+        return "Mensaje vacío", 400
 
-    respuesta = model.invoke(input=user_message)
-    return str(respuesta)
+    # Buscar el producto más relevante
+    coincidencias = productos_df[productos_df['nombre'].str.contains(user_message, case=False, na=False)]
+
+    if coincidencias.empty:
+        return "No se encontró el producto", 404
+
+    # Seleccionamos el primero (mejorar con scoring o similitud semántica si quieres más precisión)
+    producto = coincidencias.iloc[0]
+
+    # Extraemos links de supermercados
+    links_supermercados = {
+        "Mercadona": producto['link_mercadona'],
+        "Carrefour": producto['link_carrefour'],
+        "Masymas": producto['link_masymas'],
+        "BM": producto['link_bm'],
+        "Hiperber": producto['link_hiperber'],
+        "Eroski": producto['link_eroski'],
+        "Consum": producto['link_consum'],
+        "DIA": producto['link_dia'],
+    }
+
+    # Formamos el mensaje para el modelo
+    prompt = f"""
+        Eres un asistente virtual para una página de comparación de precios.
+        El usuario está buscando el producto: {producto['nombre']} (marca: {producto['marca']})
+        En los siguientes supermercados puedes encontrarlo:
+        {chr(10).join([f"- {nombre}: {link}" for nombre, link in links_supermercados.items() if pd.notna(link)])}
+    """
+
+    chain = ChatPromptTemplate.from_template("{prompt}") | model
+    result = chain.invoke({"prompt": prompt})
+    return jsonify({"respuesta": result})
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
