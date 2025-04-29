@@ -176,10 +176,10 @@ var FilterControl = L.Control.extend({
     select.id = 'supermarket-filters';
     select.multiple = true;
     select.style.width = '150px';
-    select.style.height = '120px';
+    select.style.height = '200px';
 
-    // Opciones para el select
-    var supermarketsList = ["Mercadona", "Dia", "Consum", "Carrefour", "Eroski", "BM", "Masymas", "Hiperber"];
+    // Opciones para el select - limitado a los 8 supermercados especificados
+    var supermarketsList = ["Carrefour", "Consum", "Dia", "Eroski", "Hiperber", "Masymas", "Mercadona", "BM"];
     supermarketsList.forEach(function(name) {
       var option = document.createElement('option');
       option.value = name;
@@ -300,8 +300,12 @@ var FilterControl = L.Control.extend({
     [out:json];
     (
       node["shop"="supermarket"](around:${distance}, ${lat}, ${lon});
+      node["shop"="convenience"](around:${distance}, ${lat}, ${lon});
+      node["shop"="grocery"](around:${distance}, ${lat}, ${lon});
+      way["shop"="supermarket"](around:${distance}, ${lat}, ${lon});
+      relation["shop"="supermarket"](around:${distance}, ${lat}, ${lon});
     );
-    out;
+    out center;
   `;
 
   var url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(overpassQuery);
@@ -310,14 +314,33 @@ var FilterControl = L.Control.extend({
     .then(response => response.json())
     .then(data => {
       data.elements.forEach(element => {
-        if (element.lat && element.lon) {
-          var name = element.tags.name || "Supermercado desconocido";
-          var dist = calculateDistance(lat, lon, element.lat, element.lon);
-          addSupermarketMarker(element.lat, element.lon, name, dist);
+        var elementLat, elementLon, name;
+        
+        // Manejar diferentes tipos de elementos (node, way, relation)
+        if (element.type === 'node' && element.lat && element.lon) {
+          elementLat = element.lat;
+          elementLon = element.lon;
+        } else if ((element.type === 'way' || element.type === 'relation') && element.center) {
+          // Para ways y relations, usar el punto central
+          elementLat = element.center.lat;
+          elementLon = element.center.lon;
+        } else {
+          // Si no tiene coordenadas válidas, omitir este elemento
+          return;
         }
+        
+        // Obtener el nombre del supermercado
+        name = element.tags && element.tags.name ? element.tags.name : "Supermercado desconocido";
+        
+        // Calcular la distancia
+        var dist = calculateDistance(lat, lon, elementLat, elementLon);
+        
+        // Añadir el marcador
+        addSupermarketMarker(elementLat, elementLon, name, dist);
       });
 
-     updateMarkersVisibilityCustom();
+      console.log("Supermercados encontrados:", data.elements.length);
+      updateMarkersVisibilityCustom();
     })
     .catch(err => console.error("Error obteniendo supermercados:", err));
 }
@@ -338,7 +361,74 @@ var FilterControl = L.Control.extend({
     }
 
     function addSupermarketMarker(lat, lon, name, dist, shouldAdd = true) {
+  // Función para encontrar coincidencias parciales en nombres de supermercados
+  function findSupermarketMatch(fullName) {
+    // Convertir a minúsculas para comparación insensible a mayúsculas/minúsculas
+    var lowerName = fullName.toLowerCase();
+    
+    // Mapeo de nombres alternativos para supermercados - limitado a los 8 especificados
+    var alternativeNames = {
+      "mercadona": "Mercadona",
+      "dia": "Dia",
+      "dia%": "Dia",
+      "supermercado dia": "Dia",
+      "consum": "Consum",
+      "carrefour": "Carrefour",
+      "carrefour express": "Carrefour",
+      "carrefour market": "Carrefour",
+      "eroski": "Eroski",
+      "eroski city": "Eroski",
+      "eroski center": "Eroski",
+      "bm": "BM",
+      "bm supermercados": "BM",
+      "super bm": "BM",
+      "masymas": "Masymas",
+      "mas y mas": "Masymas",
+      "hiperber": "Hiperber",
+      "supermarket": null,
+      "supermercado": null,
+      "grocery": null,
+      "convenience": null,
+      "tienda": null,
+      "alimentación": null,
+      "alimentacion": null
+    };
+    
+    // Comprobar si hay una coincidencia directa en el mapeo de nombres alternativos
+    if (alternativeNames[lowerName] !== undefined) {
+      return alternativeNames[lowerName];
+    }
+    
+    // Buscar coincidencias parciales en las claves de supermarkets
+    for (var key in supermarkets) {
+      if (lowerName.includes(key.toLowerCase())) {
+        return key; // Devolver la clave original que coincide
+      }
+    }
+    
+    // Buscar coincidencias parciales en nombres alternativos
+    for (var altName in alternativeNames) {
+      if (lowerName.includes(altName)) {
+        return alternativeNames[altName];
+      }
+    }
+    
+    return null; // No se encontró coincidencia
+  }
+  
+  // Intentar encontrar una coincidencia exacta primero
   var logoUrl = supermarkets[name];
+  
+  // Si no hay coincidencia exacta, buscar coincidencia parcial
+  if (!logoUrl) {
+    var matchedName = findSupermarketMatch(name);
+    if (matchedName) {
+      logoUrl = supermarkets[matchedName];
+      // Actualizar el nombre para el filtrado posterior
+      name = matchedName;
+    }
+  }
+  
   var iconSize = window.innerWidth > 768 ? [70, 70] : [50, 50];
   var anchorSize = [iconSize[0] / 2, iconSize[1]];
 
@@ -416,7 +506,22 @@ var FilterControl = L.Control.extend({
   });
 }
 
-      updateMarkersVisibility();
+      // Ocultar los controles de filtro y slider durante la navegación
+      document.getElementById('slider').style.display = 'none';
+      var filterControls = document.getElementsByClassName('filter-control');
+      for (var i = 0; i < filterControls.length; i++) {
+        filterControls[i].style.display = 'none';
+      }
+    }
+    
+    // Función para actualizar la visibilidad de los marcadores durante la navegación
+    function updateMarkersVisibility() {
+      // Ocultar todos los marcadores durante la navegación
+      markers.forEach(({ marker }) => {
+        if (map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
     }
 
     function updateMarkersVisibilityCustom() {
@@ -456,6 +561,16 @@ document.getElementById('exitNavigation').addEventListener('click', function() {
     map.removeControl(routeControl);
     routeControl = null;
     document.getElementById('exitNavigation').style.display = "none";
+    
+    // Restaurar los controles de filtro y slider
+    document.getElementById('slider').style.display = 'block';
+    var filterControls = document.getElementsByClassName('filter-control');
+    for (var i = 0; i < filterControls.length; i++) {
+      filterControls[i].style.display = 'block';
+    }
+    
+    // Restaurar los marcadores según los filtros actuales
+    updateMarkersVisibilityCustom();
   }
 });
 

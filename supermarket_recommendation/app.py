@@ -11,13 +11,13 @@ from langchain_core.prompts import ChatPromptTemplate
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 model = OllamaLLM(model="llama3.2")
-productos_df = pd.read_csv('supermarket_recommendation/static/productos_info.csv')
+productos_df = pd.read_csv('./static/productos_info.csv')
 
 # Configuración de la base de datos MySQL
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'root',
     'database': 'moncheap'
 }
 
