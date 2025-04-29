@@ -19,7 +19,7 @@ productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv')
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -223,7 +223,8 @@ def producto(producto_id):
     ''' historical_prices = get_historical_prices(producto_id)'''
     
     # Obtener productos similares
-#    df_productos = pd.read_csv("supermarket_recommendation\static\df_tokens.csv")
+   # df_productos = pd.read_csv("supermarket_recommendation\static\df_tokens.csv")
+    df_productos = pd.read_csv(os.path.join(BaseDir,'static', 'df_tokens.csv'))
 
     # Convertir vectores de productos (simplificado - deberías usar características relevantes)
     # Aquí asumo que usarás las características disponibles para calcular la similitud
