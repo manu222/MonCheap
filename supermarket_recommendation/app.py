@@ -3,10 +3,15 @@ import mysql.connector
 import base64
 import bcrypt
 import pandas as pd
-from static.df_tokens import TokenProcessor
+from static.funcionesMoncheap import busqueda,similitud
+import pandas as pd
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
+model = OllamaLLM(model="llama3.2")
+productos_df = pd.read_csv('supermarket_recommendation/static/productos_info.csv')
 
 # Configuración de la base de datos MySQL
 db_config = {
@@ -212,8 +217,22 @@ def producto(producto_id):
     producto = next((p for p in productos if p['id_producto'] == producto_id), None)
     if not producto:
         abort(404)
+    
     ''' historical_prices = get_historical_prices(producto_id)'''
-    return render_template('producto.html', producto=producto)
+    
+    # Obtener productos similares
+    df_productos = pd.read_csv("supermarket_recommendation\static\df_tokens.csv")
+
+    # Convertir vectores de productos (simplificado - deberías usar características relevantes)
+    # Aquí asumo que usarás las características disponibles para calcular la similitud
+    productos_similares_data = similitud(df_productos, producto_id)
+    
+    # Limitar a 4 productos similares
+    productos_similares_ids = [item['id'] for item in productos_similares_data[:4]]
+    productos_similares = [p for p in productos if p['id_producto'] in productos_similares_ids]
+    
+    return render_template('producto.html', producto=producto, productos_similares=productos_similares)
+    
 '''
 def get_historical_prices(producto_id):
     connection = get_db_connection()
@@ -248,12 +267,7 @@ def search():
     query = request.args.get('q', '')
     if not query:
         return jsonify([])
-    
-    # Importar las funciones necesarias
-    from static.funcionesMoncheap import busqueda
-    from static.df_tokens import TokenProcessor
-    import pandas as pd
-    
+
     # Obtener todos los productos
     productos = get_products()
     # Convertir a DataFrame
@@ -261,7 +275,7 @@ def search():
     
     # Realizar la búsqueda usando el sistema de tokens de df_tokens.py y funcionesMoncheap.py
     # El token_processor se inicializa en funcionesMoncheap.py y utiliza df_tokens.csv
-    resultados = busqueda(query, df, umbral=0.3)
+    resultados = busqueda(query, df)
     
     return jsonify(resultados)
 
@@ -273,15 +287,44 @@ def mapa():
 def chatbot():
     return render_template('chatbot_popup.html')
 
-@app.route('/chatbot/message', methods=['POST'])
-def chatbot_message():
-    message = request.json.get('message', '')
-    if not message:
-        return jsonify({'error': 'No se proporcionó un mensaje'}), 400
-    from static.chatbot import get_chatbot_instance
-    chatbot = get_chatbot_instance()
-    response = chatbot.get_response(message)
-    return jsonify({'response': response})
+@app.route('/chatbot/answer', methods=['POST'])
+def chat_api():
+    user_message = request.get_data(as_text=True)
+    if not user_message:
+        return "Mensaje vacío", 400
+
+    # Buscar el producto más relevante
+    coincidencias = productos_df[productos_df['nombre'].str.contains(user_message, case=False, na=False)]
+
+    if coincidencias.empty:
+        return "No se encontró el producto", 404
+
+    # Seleccionamos el primero (mejorar con scoring o similitud semántica si quieres más precisión)
+    producto = coincidencias.iloc[0]
+
+    # Extraemos links de supermercados
+    links_supermercados = {
+        "Mercadona": producto['link_mercadona'],
+        "Carrefour": producto['link_carrefour'],
+        "Masymas": producto['link_masymas'],
+        "BM": producto['link_bm'],
+        "Hiperber": producto['link_hiperber'],
+        "Eroski": producto['link_eroski'],
+        "Consum": producto['link_consum'],
+        "DIA": producto['link_dia'],
+    }
+
+    # Formamos el mensaje para el modelo
+    prompt = f"""
+        Eres un asistente virtual para una página de comparación de precios.
+        El usuario está buscando el producto: {producto['nombre']} (marca: {producto['marca']})
+        En los siguientes supermercados puedes encontrarlo:
+        {chr(10).join([f"- {nombre}: {link}" for nombre, link in links_supermercados.items() if pd.notna(link)])}
+    """
+
+    chain = ChatPromptTemplate.from_template("{prompt}") | model
+    result = chain.invoke({"prompt": prompt})
+    return jsonify({"respuesta": result})
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
