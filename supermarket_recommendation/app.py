@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, abort
+from langchain_core.messages.content_blocks import BaseDataContentBlock
 import mysql.connector
 import base64
 import bcrypt
@@ -7,11 +8,12 @@ from static.funcionesMoncheap import busqueda,similitud
 import pandas as pd
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
-
+import os
+BaseDir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 model = OllamaLLM(model="llama3.2")
-productos_df = pd.read_csv('static/productos_info.csv')
+productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv'))
 
 # Configuración de la base de datos MySQL
 db_config = {
