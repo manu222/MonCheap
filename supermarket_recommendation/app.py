@@ -11,7 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 model = OllamaLLM(model="llama3.2")
-productos_df = pd.read_csv('./static/productos_info.csv')
+productos_df = pd.read_csv('supermarket_recommendation/static/productos_info.csv')
 
 # Configuración de la base de datos MySQL
 db_config = {
@@ -221,7 +221,7 @@ def producto(producto_id):
     ''' historical_prices = get_historical_prices(producto_id)'''
     
     # Obtener productos similares
-    df_productos = pd.read_csv("supermarket_recommendation\static\df_tokens.csv")
+#    df_productos = pd.read_csv("supermarket_recommendation\static\df_tokens.csv")
 
     # Convertir vectores de productos (simplificado - deberías usar características relevantes)
     # Aquí asumo que usarás las características disponibles para calcular la similitud
