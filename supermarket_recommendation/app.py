@@ -53,7 +53,8 @@ def get_products():
     products = cursor.fetchall()
 
     for p in products:
-        p['img'] = procesar_imagen(p['img'])
+       # p['img'] = procesar_imagen(p['img'])
+        p['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(p['id_producto'])+'.webp'
 
     cursor.close()
     connection.close()
