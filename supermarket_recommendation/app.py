@@ -215,6 +215,14 @@ def toggle_favorite(product_id):
 
 @app.route('/producto/<int:producto_id>')
 def producto(producto_id):
+    # Incrementar el contador de visitas
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("UPDATE producto SET visitas = visitas + 1 WHERE id_producto = %s", (producto_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    
     productos = get_products()
     producto = next((p for p in productos if p['id_producto'] == producto_id), None)
     if not producto:
