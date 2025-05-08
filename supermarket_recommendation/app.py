@@ -88,7 +88,8 @@ def get_most_liked():
                    ORDER BY cantidad_likes DESC LIMIT 5; """)
     most_liked = cursor.fetchall()
     for like in most_liked:
-        like['img'] = procesar_imagen(like['img'])
+        #like['img'] = procesar_imagen(like['img'])
+        like['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(p['id_producto'])+'.webp'
     cursor.close()
     connection.close()
     return most_liked
@@ -99,7 +100,8 @@ def get_most_viewed():
     cursor.execute("SELECT * FROM producto p ORDER BY p.visitas DESC LIMIT 5;")
     most_viewed = cursor.fetchall()
     for item in most_viewed:
-        item['img'] = procesar_imagen(item['img'])
+        #item['img'] = procesar_imagen(item['img'])
+        item['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(p['id_producto'])+'.webp'
     cursor.close()
     conn.close()
     return most_viewed
