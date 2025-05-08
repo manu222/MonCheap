@@ -73,6 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
     const productContainer = document.getElementById('productContainer');
+    const mostLiked = document.getElementById('masGustados');
+    const mostViewed = document.getElementById('masVisitados');
     let searchTimeout;
 
     if (searchInput) {
@@ -80,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (searchButton) {
             searchButton.style.display = 'none'; // Ocultar el botón de búsqueda ya que no es necesario
         }
-
+        
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.trim();
             
@@ -90,12 +92,104 @@ document.addEventListener("DOMContentLoaded", () => {
             // Esperar 300ms después de que el usuario deje de escribir
             searchTimeout = setTimeout(() => {
                 if (searchTerm === '') {
-                    // Si la búsqueda está vacía, mostrar todos los productos
-                    document.querySelectorAll('.col-md-4.col-lg-3.mb-4').forEach(card => {
-                        card.style.display = '';
-                    });
+                    // Si la búsqueda está vacía, cargar todos los productos desde el backend
+                    
+                    // Mostrar las secciones de productos más gustados y visitados
+                    mostViewed.style.display = "block";
+                    mostLiked.style.display = "block";
+                    
+                    // Mostrar indicador de carga
+                    productContainer.innerHTML = '<div class="text-center w-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
+                    
+                    // Llamar al endpoint para obtener todos los productos
+                    fetch('/get_all_products')
+                        .then(response => response.json())
+                        .then(products => {
+                            if (products.length === 0) {
+                                productContainer.innerHTML = '<div class="text-center w-100"><p>No hay productos disponibles.</p></div>';
+                                return;
+                            }
+                            
+                            // Crear HTML para todos los productos
+                            let productsHTML = '';
+                            products.forEach(product => {
+                                // Determinar si el producto está en favoritos
+                                const isFavorite = window.favoritos && window.favoritos.includes(product.id_producto);
+                                const heartSvg = isFavorite ? favorite : notfavorite;
+                                const heartTitle = isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos';
+                                
+                                // Formatear el precio si existe
+                                let precioHTML = '';
+                                if (product.precio !== undefined && product.precio !== null) {
+                                    precioHTML = `<p class="card-text fw-bold">€${parseFloat(product.precio).toFixed(2)}</p>`;
+                                } else {
+                                    precioHTML = `<p class="card-text fw-bold text-muted">Precio no disponible</p>`;
+                                }
+                                
+                                productsHTML += `
+                                <div class="col-md-4 col-lg-3 mb-4">
+                                    <div class="card shadow-lg product-card">
+                                        <div class="image-container">
+                                            <a href="/producto/${product.id_producto}" class="text-decoration-none text-dark">
+                                                <img src="${product.img}" class="card-img-top product-img" alt="${product.nombre}">
+                                            </a>
+                                            <button class="heart-btn" data-product-id="${product.id_producto}" data-bs-toggle="tooltip" data-bs-placement="top" title="${heartTitle}">
+                                                ${heartSvg}
+                                            </button>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <a href="/producto/${product.id_producto}" class="text-decoration-none text-dark">
+                                                <h5 class="card-title">${product.nombre}</h5>
+                                                <p class="card-text text-muted">${product.categoria || ''}</p>
+                                                ${precioHTML}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            });
+                            
+                            // Actualizar el contenedor de productos
+                            productContainer.innerHTML = productsHTML;
+                            
+                            // Reinicializar los tooltips para los nuevos botones
+                            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                            });
+                            
+                            // Agregar eventos a los nuevos botones de corazón
+                            document.querySelectorAll(".heart-btn").forEach(button => {
+                                button.addEventListener("click", function() {
+                                    let productId = this.getAttribute("data-product-id");
+                                    let isFavorited = this.innerHTML.trim() === favorite.trim();
+                                    
+                                    if (isFavorited) {
+                                        this.innerHTML = notfavorite;
+                                        this.setAttribute("title", "Añadir a favoritos");
+                                    } else {
+                                        this.innerHTML = favorite; 
+                                        this.setAttribute("title", "Quitar de favoritos");
+                                    }
+                                    
+                                    fetch(`/toggle_favorite/${productId}`, { method: "POST" })
+                                        .then(response => response.json())
+                                        .catch(error => {
+                                            console.error("Error en la solicitud:", error);
+                                        });
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error al cargar todos los productos:', error);
+                            productContainer.innerHTML = '<div class="text-center w-100"><p>Error al cargar los productos. Inténtalo de nuevo.</p></div>';
+                        });
+                    
                     return;
                 }
+
+                // Ocultar las secciones de productos más gustados y visitados durante la búsqueda
+                mostViewed.style.display = "none";
+                mostLiked.style.display = "none";
 
                 // Mostrar indicador de carga
                 productContainer.innerHTML = '<div class="text-center w-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>';

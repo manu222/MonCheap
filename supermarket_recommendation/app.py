@@ -365,5 +365,10 @@ def chat_api():
     result = chain.invoke({"prompt": prompt})
     return jsonify({"respuesta": result})
 
+@app.route('/get_all_products')
+def get_all_products():
+    products = get_products()
+    return jsonify(products)
+
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
