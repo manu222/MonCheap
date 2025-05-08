@@ -19,7 +19,7 @@ productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv')
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -89,7 +89,7 @@ def get_most_liked():
     most_liked = cursor.fetchall()
     for like in most_liked:
         #like['img'] = procesar_imagen(like['img'])
-        like['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(p['id_producto'])+'.webp'
+        like['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(like['id_producto'])+'.webp'
     cursor.close()
     connection.close()
     return most_liked
@@ -101,7 +101,7 @@ def get_most_viewed():
     most_viewed = cursor.fetchall()
     for item in most_viewed:
         #item['img'] = procesar_imagen(item['img'])
-        item['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(p['id_producto'])+'.webp'
+        item['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(item['id_producto'])+'.webp'
     cursor.close()
     conn.close()
     return most_viewed
