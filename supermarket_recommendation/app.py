@@ -53,7 +53,7 @@ def get_products():
     products = cursor.fetchall()
 
     for p in products:
-        p['img'] = procesar_imagen(p['img'])
+        p['img'] = 'https://dx7csy7aghu7b.cloudfront.net/prods/'+str(p['id_producto'])+'.webp'
 
     cursor.close()
     connection.close()
@@ -78,6 +78,31 @@ def get_likes(user_id):
     connection.close()
     return likes
 
+def get_most_liked():
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("""SELECT p.id_producto, p.nombre, p.marca, p.categoria, p.img, COUNT(l.id_producto) AS cantidad_likes 
+                   FROM producto p JOIN likes l ON p.id_producto = l.id_producto 
+                   GROUP BY p.id_producto 
+                   ORDER BY cantidad_likes DESC LIMIT 5; """)
+    most_liked = cursor.fetchall()
+    for like in most_liked:
+        like['img'] = procesar_imagen(like['img'])
+    cursor.close()
+    connection.close()
+    return most_liked
+
+def get_most_viewed():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM producto p ORDER BY p.visitas DESC LIMIT 5;")
+    most_viewed = cursor.fetchall()
+    for item in most_viewed:
+        item['img'] = procesar_imagen(item['img'])
+    cursor.close()
+    conn.close()
+    return most_viewed
+
 def check_login(mail, password):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
@@ -94,13 +119,15 @@ def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     productos = get_products()
+    most_liked = get_most_liked()
+    most_viewed = get_most_viewed()
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT id_producto FROM likes WHERE id_user = %s", (session['user_id'],))
     favoritos = [row[0] for row in cursor.fetchall()]
     cursor.close()
     connection.close()
-    return render_template('index.html', productos=productos, favoritos=favoritos)
+    return render_template('index.html', productos=productos, favoritos=favoritos, most_liked=most_liked, most_viewed=most_viewed)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

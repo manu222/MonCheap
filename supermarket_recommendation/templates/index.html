@@ -65,6 +65,83 @@
             <button class="filter-button" id="searchButton">Buscar</button>
         </div>
 
+        <!-- Sección de productos más gustados -->
+        <div class="container mt-5" style="background: linear-gradient(135deg, #fbfbfb, #f0f0f0); border-radius: 15px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);">
+            <h2 class="text-center mb-4">Productos más gustados</h2>
+            <div class="row justify-content-center">
+                {% for product in most_liked %}   
+                    <div class="col-md-4 col-lg-2 mb-4">
+                        <div class="card shadow-lg product-card">
+                            <div class="image-container">
+                                <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
+                                    <img src="{{ product.img if product.img else '' }}" onerror="this.classList.add('error')" 
+                                        class="card-img-top product-img" 
+                                        alt="{{ product.nombre }}">
+                                </a>
+                                <button class="heart-btn" data-product-id="{{ product.id_producto }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{% if product.id_producto in favoritos %}Quitar de favoritos{% else %}Añadir a favoritos{% endif %}">
+                                    {% if product.id_producto in favoritos %}
+                                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M16.0298 5.33C17.5998 3.88 19.6898 3 21.9998 3C26.9698 3 30.9998 7.03 30.9998 12C30.9998 20 20.9998 29 15.9998 31C10.9998 29 0.999817 20 0.999817 12C0.999817 7.03 5.02982 3 9.99982 3C12.3098 3 14.4098 3.88 15.9998 5.3L16.0298 5.33Z" fill="#ff0000"></path> <path d="M16 5.30451C14.407 3.87551 12.309 2.99951 10 2.99951C5.029 2.99951 1 7.02951 1 11.9995C1 19.9995 11 28.9995 16 30.9995C21 28.9995 31 19.9995 31 11.9995C31 7.02951 26.971 2.99951 22 2.99951C18.477 2.99951 15.479 5.05051 14 7.99951M27 11.9998C27 9.23781 24.762 6.99981 22 6.99981" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+                                    {% else %}
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                    {% endif %}
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="card-body text-center">
+                                <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
+                                    <h5 class="card-title">{{ product.nombre }}</h5>
+                                    <p class="card-text text-muted">{{ product.categoria }}</p>
+                                    <p class="card-text"><small class="text-success fw-bold"><i class="fas fa-heart"></i> {{ product.cantidad_likes }} likes</small></p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sección de productos más visitados -->
+        <div class="container mt-5" style="background: linear-gradient(135deg, #fbfbfb, #f0f0f0); border-radius: 15px; box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);">
+            <h2 class="text-center mb-4">Productos más visitados</h2>
+            <div class="row justify-content-center">
+                {% for product in most_viewed %}   
+                    <div class="col-md-4 col-lg-2 mb-4">
+                        <div class="card shadow-lg product-card">
+                            <div class="image-container">
+                                <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
+                                    <img src="{{ product.img if product.img else '' }}" onerror="this.classList.add('error')" 
+                                        class="card-img-top product-img" 
+                                        alt="{{ product.nombre }}">
+                                </a>
+                                <button class="heart-btn" data-product-id="{{ product.id_producto }}" data-bs-toggle="tooltip" data-bs-placement="top" title="{% if product.id_producto in favoritos %}Quitar de favoritos{% else %}Añadir a favoritos{% endif %}">
+                                    {% if product.id_producto in favoritos %}
+                                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M16.0298 5.33C17.5998 3.88 19.6898 3 21.9998 3C26.9698 3 30.9998 7.03 30.9998 12C30.9998 20 20.9998 29 15.9998 31C10.9998 29 0.999817 20 0.999817 12C0.999817 7.03 5.02982 3 9.99982 3C12.3098 3 14.4098 3.88 15.9998 5.3L16.0298 5.33Z" fill="#ff0000"></path> <path d="M16 5.30451C14.407 3.87551 12.309 2.99951 10 2.99951C5.029 2.99951 1 7.02951 1 11.9995C1 19.9995 11 28.9995 16 30.9995C21 28.9995 31 19.9995 31 11.9995C31 7.02951 26.971 2.99951 22 2.99951C18.477 2.99951 15.479 5.05051 14 7.99951M27 11.9998C27 9.23781 24.762 6.99981 22 6.99981" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+                                    {% else %}
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                    {% endif %}
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="card-body text-center">
+                                <a href="{{ url_for('producto', producto_id=product.id_producto) }}" class="text-decoration-none text-dark">
+                                    <h5 class="card-title">{{ product.nombre }}</h5>
+                                    <p class="card-text text-muted">{{ product.categoria }}</p>
+                                    <p class="card-text"><small class="text-primary fw-bold"><i class="fas fa-eye"></i> {{ product.visitas }} visitas</small></p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <h2 class="text-center mb-4">Otros productos</h2>
         <!-- Grid de productos -->
         <div class="row justify-content-center" id="productContainer">
                     {% for product in productos %}   
