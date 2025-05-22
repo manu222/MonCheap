@@ -157,7 +157,7 @@
         // Auto-scroll hacia abajo
         let chatBox = document.getElementById("chat-box");
         chatBox.scrollTop = chatBox.scrollHeight;
-    
+
         // NUEVA llamada al backend con fetch
         try {
           const res = await fetch("/chatbot/answer", {
@@ -165,7 +165,7 @@
             headers: { "Content-Type": "text/plain" },
             body: messageText,
           });
-    
+          
           const botResponse = await res.text();
           addBotMessage(botResponse);
         } catch (err) {
@@ -200,6 +200,11 @@
         window.parent.document.getElementById("popupContainer").style.display =
           "none";
       }
+
+      // Mensaje de bienvenida al cargar el chatbot
+      window.onload = () => {
+        addBotMessage("Hola, bienvenido al chatbot de Moncheap. ¿Con qué producto necesitas ayuda?");
+      };
     </script>
   </body>
 </html>
