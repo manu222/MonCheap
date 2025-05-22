@@ -9,17 +9,20 @@ import pandas as pd
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 import os
+from flask import Response
+import re
+
 BaseDir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
-model = OllamaLLM(model="llama3.2")
+model = OllamaLLM(model="llama3")
 productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv'))
 
 # Configuración de la base de datos MySQL
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 
@@ -330,42 +333,39 @@ def chatbot():
 
 @app.route('/chatbot/answer', methods=['POST'])
 def chat_api():
+    # Recoger la pregunta del usuario
     user_message = request.get_data(as_text=True)
-    if not user_message:
-        return "Mensaje vacío", 400
 
-    # Buscar el producto más relevante
-    coincidencias = productos_df[productos_df['nombre'].str.contains(user_message, case=False, na=False)]
+    # Respuesta sin Fine-Tunning
+    #result = model.invoke(user_message)
+    #return "Moncheap: " + result
 
-    if coincidencias.empty:
-        return "No se encontró el producto", 404
+    # Tratar la pregunta del usuario para obtener palabras clave
+    user_words = set(re.findall(r'\w+', user_message.lower()))
 
-    # Seleccionamos el primero (mejorar con scoring o similitud semántica si quieres más precisión)
-    producto = coincidencias.iloc[0]
+    # Obtener los productos de la base de datos
+    products = get_products()  
+    
+    # Eliminar campos innecesarios de los productos
+    filtered_products = []
+    for p in products:
+        del p['id_producto']
+        del p['img']
 
-    # Extraemos links de supermercados
-    links_supermercados = {
-        "Mercadona": producto['link_mercadona'],
-        "Carrefour": producto['link_carrefour'],
-        "Masymas": producto['link_masymas'],
-        "BM": producto['link_bm'],
-        "Hiperber": producto['link_hiperber'],
-        "Eroski": producto['link_eroski'],
-        "Consum": producto['link_consum'],
-        "DIA": producto['link_dia'],
-    }
+    nombre_words = set(re.findall(r'\w+', p['nombre'].lower()))
+    if user_words & nombre_words:
+        filtered_products.append(p)
 
     # Formamos el mensaje para el modelo
     prompt = f"""
-        Eres un asistente virtual para una página de comparación de precios.
-        El usuario está buscando el producto: {producto['nombre']} (marca: {producto['marca']})
-        En los siguientes supermercados puedes encontrarlo:
-        {chr(10).join([f"- {nombre}: {link}" for nombre, link in links_supermercados.items() if pd.notna(link)])}
-    """
-
+        Eres un asistente virtual que habla en español para una página de comparación de precios, llamada Moncheap.
+        Pregunta del usuario: {user_message}, 
+        Informacion sobre los productos del catálogo: {filtered_products}.
+        Quiero que respondas a la pregunta del usuario teniendo en cuenta los productos del catálogo
+        """
     chain = ChatPromptTemplate.from_template("{prompt}") | model
     result = chain.invoke({"prompt": prompt})
-    return jsonify({"respuesta": result})
+    return Response("Moncheap: " + result, content_type='text/plain; charset=utf-8')
 
 @app.route('/get_all_products')
 def get_all_products():
