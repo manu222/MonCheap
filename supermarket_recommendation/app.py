@@ -22,7 +22,7 @@ productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv')
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': 'root',
     'database': 'moncheap'
 }
 
@@ -124,16 +124,40 @@ def check_login(mail, password):
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    productos = get_products()
+
+    # 1) Traigo todos los productos (con posibles duplicados por cada precio)
+    all_products = get_products()
+
+    # 2) Elimino duplicados por id_producto, conservando la primera aparición
+    unique_products = {}
+    for p in all_products:
+        if p['id_producto'] not in unique_products:
+            unique_products[p['id_producto']] = p
+    productos = list(unique_products.values())
+
+    # 3) Traigo los más gustados y los más vistos
     most_liked = get_most_liked()
     most_viewed = get_most_viewed()
+
+    # 4) Recupero la lista de favoritos del usuario
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id_producto FROM likes WHERE id_user = %s", (session['user_id'],))
+    cursor.execute(
+        "SELECT id_producto FROM likes WHERE id_user = %s",
+        (session['user_id'],)
+    )
     favoritos = [row[0] for row in cursor.fetchall()]
     cursor.close()
     connection.close()
-    return render_template('index.html', productos=productos, favoritos=favoritos, most_liked=most_liked, most_viewed=most_viewed)
+
+    # 5) Renderizo el template con la lista filtrada
+    return render_template(
+        'index.html',
+        productos=productos,
+        favoritos=favoritos,
+        most_liked=most_liked,
+        most_viewed=most_viewed
+    )
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -248,50 +272,79 @@ def toggle_favorite(product_id):
 
 @app.route('/producto/<int:producto_id>')
 def producto(producto_id):
-    # Incrementar el contador de visitas
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("UPDATE producto SET visitas = visitas + 1 WHERE id_producto = %s", (producto_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    productos = get_products()
-    producto = next((p for p in productos if p['id_producto'] == producto_id), None)
-    if not producto:
-        abort(404)
-    
-    ''' historical_prices = get_historical_prices(producto_id)'''
-    
-    # Obtener productos similares
-   # df_productos = pd.read_csv("supermarket_recommendation\static\df_tokens.csv")
-    df_productos = pd.read_csv(os.path.join(BaseDir,'static', 'df_tokens.csv'))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-    # Convertir vectores de productos (simplificado - deberías usar características relevantes)
-    # Aquí asumo que usarás las características disponibles para calcular la similitud
-    productos_similares_data = similitud(df_productos, producto_id)
-    
-    # Limitar a 4 productos similares
-    productos_similares_ids = [item['id'] for item in productos_similares_data[:4]]
-    productos_similares = [p for p in productos if p['id_producto'] in productos_similares_ids]
-    
-    return render_template('producto.html', producto=producto, productos_similares=productos_similares)
-    
-'''
-def get_historical_prices(producto_id):
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT fecha, precio
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    # 1) Incrementar visitas
+    cur.execute(
+        "UPDATE producto SET visitas = visitas + 1 WHERE id_producto = %s",
+        (producto_id,)
+    )
+    conn.commit()
+
+    # 2) Obtener datos básicos del producto
+    cur.execute("""
+        SELECT p.id_producto, p.nombre, p.marca, p.categoria, p.img,
+               p.kcal, p.grasas, p.grasas_saturadas, p.proteinas,
+               p.hidratos_carbono, p.azucares, p.sal, p.visitas
+        FROM producto p
+        WHERE p.id_producto = %s
+    """, (producto_id,))
+    producto = cur.fetchone()
+    if not producto:
+        cur.close()
+        conn.close()
+        abort(404)
+
+    # 3) Obtener **todos** los precios de ese producto
+    cur.execute("""
+        SELECT supermercado, link, precio, precio_oferta, precio_unidad
         FROM precios
         WHERE id_producto = %s
-        ORDER BY fecha ASC
+        ORDER BY supermercado
     """, (producto_id,))
-    data = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return data
-    '''
+    precios = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # 4) Productos similares (igual que antes)
+    all_products = get_products()
+    df_productos = pd.read_csv(os.path.join(BaseDir, 'static', 'df_tokens.csv'))
+    similares_data = similitud(df_productos, producto_id)
+
+    # Extraemos solo IDs, quitamos el mismo producto y duplicados
+    seen = set()
+    similares_ids = []
+    for item in similares_data:
+        pid = item['id']
+        if pid != producto_id and pid not in seen:
+            seen.add(pid)
+            similares_ids.append(pid)
+        if len(similares_ids) >= 4:
+            break
+
+    productos_similares = [
+        p for p in all_products if p['id_producto'] in similares_ids
+    ]
+
+    # 5) Eliminar posibles duplicados en productos_similares
+    unique_similares = {}
+    for p in productos_similares:
+        if p['id_producto'] not in unique_similares:
+            unique_similares[p['id_producto']] = p
+    productos_similares = list(unique_similares.values())
+
+    return render_template(
+        'producto.html',
+        producto=producto,
+        precios=precios,
+        productos_similares=productos_similares
+    )
+
 
 @app.route('/upload', methods=['POST'])
 def upload():

@@ -18,42 +18,21 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MonCheap" class="logo-nav">
                 <span class="ms-2 fw-bold">MonCheap</span>
             </a>
-            
             <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-    
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i class="fas fa-home"></i> Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/likes">
-                            <i class="fas fa-heart"></i> Favoritos
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/mapa">
-                            <i class="fas fa-map"></i> Mapa
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/user">
-                            <i class="fas fa-user"></i> Perfil
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link logout-btn" href="/logout">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/likes"><i class="fas fa-heart"></i> Favoritos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/mapa"><i class="fas fa-map"></i> Mapa</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user"><i class="fas fa-user"></i> Perfil</a></li>
+                    <li class="nav-item"><a class="nav-link logout-btn" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </div>
         </div>
     </nav>
+
     <div class="container mt-5 pt-5">
         <div class="bg-light p-4 rounded-3 shadow-sm mb-4">
             <nav aria-label="breadcrumb">
@@ -67,10 +46,8 @@
         <div class="row">
             <div class="col-md-5">
                 <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body p-3">
-                        <div class="product-image text-center">
-                            <img src="{{ producto.img }}" alt="{{ producto.nombre }}" class="img-fluid rounded" style="max-height: 400px;">
-                        </div>
+                    <div class="card-body p-3 text-center">
+                        <img src="{{ producto.img }}" alt="{{ producto.nombre }}" class="img-fluid rounded" style="max-height: 400px;">
                     </div>
                 </div>
             </div>
@@ -84,70 +61,126 @@
                             {% endif %}
                             <span class="badge bg-light text-dark p-2">Categoría: {{ producto.categoria }}</span>
                         </div>
-                        
                         <div class="card bg-light border-0 p-3 my-4">
                             <div class="price-section">
                                 {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
-                                    <h4 class="price mb-0">Precio: <span class="text-decoration-line-through text-muted">€{{ producto.precio | round(2) }}</span> <strong class="text-danger">€{{ producto.precio_oferta | round(2) }}</strong></h4>
+                                    <h4 class="price mb-0">
+                                        Precio:
+                                        <span class="text-decoration-line-through text-muted">€{{ producto.precio|round(2) }}</span>
+                                        <strong class="text-danger">€{{ producto.precio_oferta|round(2) }}</strong>
+                                    </h4>
                                 {% elif producto.precio %}
-                                    <h4 class="price mb-0">Precio: <strong>€{{ producto.precio | round(2) }}</strong></h4>
+                                    <h4 class="price mb-0">Precio: <strong>€{{ producto.precio|round(2) }}</strong></h4>
                                 {% else %}
                                     <h4 class="price mb-0">Precio no disponible</h4>
                                 {% endif %}
-                                
                                 {% if producto.precio_unidad %}
-                                    <p class="text-muted small mt-1">Precio por unidad: {{ producto.precio_unidad }}</p>
+                                    <p class="text-muted small mt-1">Precio por unidad: €{{ producto.precio_unidad|round(2) }}</p>
                                 {% endif %}
                             </div>
                         </div>
-                        
-                        {% if producto.supermercado %}
+
+                        <!-- LISTA DE PRECIOS POR SUPERMERCADO -->
                         <div class="card bg-light border-0 p-3 mb-4">
                             <div class="supermarket-section">
                                 <h5 class="mb-2"><i class="fas fa-store me-2"></i>Disponible en:</h5>
-                                <p class="mb-2">{{ producto.supermercado }}</p>
-                                {% if producto.link %}
-                                <a href="{{ producto.link }}" target="_blank" class="btn btn-primary"><i class="fas fa-external-link-alt me-2"></i>Ver en tienda</a>
-                                {% endif %}
+                                <ul class="list-group">
+                                    {% for pr in precios %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ pr.supermercado|capitalize }}</strong>
+                                            {% if pr.precio %}
+                                                {% if pr.precio_oferta and pr.precio_oferta < pr.precio %}
+                                                    <span class="text-muted text-decoration-line-through">€{{ pr.precio|round(2) }}</span>
+                                                    <span class="text-danger ms-1">€{{ pr.precio_oferta|round(2) }}</span>
+                                                {% else %}
+                                                    <span class="ms-1">€{{ pr.precio|round(2) }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted ms-1">Precio no disponible</span>
+                                            {% endif %}
+                                            {% if pr.precio_unidad %}
+                                                <small class="text-muted d-block">Unidad: €{{ pr.precio_unidad|round(2) }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% if pr.link %}
+                                        <a href="{{ pr.link }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
                             </div>
                         </div>
-                        {% endif %}
-                        
+
                         <div class="mt-4">
-                            <a href="javascript:history.back()" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Volver</a>
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Volver
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
+        <!-- INFORMACIÓN NUTRICIONAL -->
         {% if producto.kcal is not none or producto.proteinas is not none %}
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body p-4">
                 <h4 class="mb-4 fw-bold"><i class="fas fa-utensils me-2"></i>Información Nutricional</h4>
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="nutrition-section">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <ul class="list-group shadow-sm">
-                                        {% if producto.kcal is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-fire-alt text-danger me-2"></i>Calorías:</span> <span class="badge bg-primary rounded-pill">{{ producto.kcal }} kcal</span></li>{% endif %}
-                                        {% if producto.grasas is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-oil-can text-warning me-2"></i>Grasas:</span> <span class="badge bg-primary rounded-pill">{{ producto.grasas }}g</span></li>{% endif %}
-                                        {% if producto.grasas_saturadas is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-bacon text-warning me-2"></i>Grasas saturadas:</span> <span class="badge bg-primary rounded-pill">{{ producto.grasas_saturadas }}g</span></li>{% endif %}
-                                        {% if producto.proteinas is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-egg text-success me-2"></i>Proteínas:</span> <span class="badge bg-primary rounded-pill">{{ producto.proteinas }}g</span></li>{% endif %}
-                                    </ul>
-                                </div>
-                                <div class="col-md-6">
-                                    <ul class="list-group shadow-sm">
-                                        {% if producto.hidratos_carbono is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-bread-slice text-info me-2"></i>Carbohidratos:</span> <span class="badge bg-primary rounded-pill">{{ producto.hidratos_carbono }}g</span></li>{% endif %}
-                                        {% if producto.azucares is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-candy-cane text-danger me-2"></i>Azúcares:</span> <span class="badge bg-primary rounded-pill">{{ producto.azucares }}g</span></li>{% endif %}
-                                        {% if producto.sal is not none %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-cubes text-secondary me-2"></i>Sal:</span> <span class="badge bg-primary rounded-pill">{{ producto.sal }}g</span></li>{% endif %}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+                        <ul class="list-group shadow-sm">
+                            {% if producto.kcal is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-fire-alt text-danger me-2"></i>Calorías:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.kcal }} kcal</span>
+                            </li>
+                            {% endif %}
+                            {% if producto.grasas is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-oil-can text-warning me-2"></i>Grasas:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.grasas }}g</span>
+                            </li>
+                            {% endif %}
+                            {% if producto.grasas_saturadas is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-bacon text-warning me-2"></i>Grasas saturadas:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.grasas_saturadas }}g</span>
+                            </li>
+                            {% endif %}
+                            {% if producto.proteinas is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-egg text-success me-2"></i>Proteínas:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.proteinas }}g</span>
+                            </li>
+                            {% endif %}
+                        </ul>
                     </div>
                     <div class="col-md-6">
+                        <ul class="list-group shadow-sm">
+                            {% if producto.hidratos_carbono is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-bread-slice text-info me-2"></i>Carbohidratos:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.hidratos_carbono }}g</span>
+                            </li>
+                            {% endif %}
+                            {% if producto.azucares is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-candy-cane text-danger me-2"></i>Azúcares:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.azucares }}g</span>
+                            </li>
+                            {% endif %}
+                            {% if producto.sal is not none %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-cubes text-secondary me-2"></i>Sal:</span>
+                                <span class="badge bg-primary rounded-pill">{{ producto.sal }}g</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-12 mt-4">
                         <div class="chart-container bg-white p-3 rounded shadow-sm" style="position: relative; height:280px;">
                             <h5 class="text-center mb-3"><i class="fas fa-chart-bar me-2"></i>Gráfico de valores</h5>
                             <canvas id="nutritionChart"></canvas>
@@ -157,32 +190,34 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- PRODUCTOS SIMILARES -->
         {% if productos_similares %}
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body p-4">
                 <h4 class="mb-4 fw-bold"><i class="fas fa-shopping-basket me-2"></i>Productos Similares</h4>
                 <div class="row row-cols-1 row-cols-md-4 g-4">
-                    {% for producto_similar in productos_similares %}
+                    {% for prod in productos_similares %}
                     <div class="col">
-                        <a href="{{ url_for('producto', producto_id=producto_similar.id_producto) }}" class="text-decoration-none">
+                        <a href="{{ url_for('producto', producto_id=prod.id_producto) }}" class="text-decoration-none">
                             <div class="product-card">
                                 <div class="image-container">
-                                    <img src="{{ producto_similar.img }}" alt="{{ producto_similar.nombre }}" class="product-img p-2">
+                                    <img src="{{ prod.img }}" alt="{{ prod.nombre }}" class="product-img p-2">
                                 </div>
                                 <div class="card-body p-3">
-                                    <h5 class="card-title text-truncate">{{ producto_similar.nombre }}</h5>
-                                    {% if producto_similar.precio %}
-                                        <p class="card-text mb-0">
-                                            {% if producto_similar.precio_oferta and producto_similar.precio_oferta < producto_similar.precio %}
-                                                <span class="text-decoration-line-through text-muted">€{{ producto_similar.precio | round(2) }}</span>
-                                                <strong class="text-danger">€{{ producto_similar.precio_oferta | round(2) }}</strong>
-                                            {% else %}
-                                                <strong>€{{ producto_similar.precio | round(2) }}</strong>
-                                            {% endif %}
-                                        </p>
+                                    <h5 class="card-title text-truncate">{{ prod.nombre }}</h5>
+                                    {% if prod.precio %}
+                                    <p class="card-text mb-0">
+                                        {% if prod.precio_oferta and prod.precio_oferta < prod.precio %}
+                                        <span class="text-decoration-line-through text-muted">€{{ prod.precio|round(2) }}</span>
+                                        <strong class="text-danger">€{{ prod.precio_oferta|round(2) }}</strong>
+                                        {% else %}
+                                        <strong>€{{ prod.precio|round(2) }}</strong>
+                                        {% endif %}
+                                    </p>
                                     {% endif %}
-                                    {% if producto_similar.supermercado %}
-                                        <p class="card-text text-muted small">{{ producto_similar.supermercado }}</p>
+                                    {% if prod.supermercado %}
+                                    <p class="card-text text-muted small">{{ prod.supermercado }}</p>
                                     {% endif %}
                                 </div>
                             </div>
@@ -192,59 +227,44 @@
                 </div>
             </div>
         </div>
-        {% endif %}             
+        {% endif %}
     </div>
 
     {% if producto.kcal is not none or producto.proteinas is not none %}
     <script>
-        const data = {
-            labels: ['Calorías', 'Grasas', 'Grasas Saturadas', 'Proteínas', 'Carbohidratos', 'Azúcares', 'Sal'],
-            datasets: [{
-                label: 'Valores Nutricionales',
-                data: [
-                    {{ producto.kcal if producto.kcal is not none else 0 }}, 
-                    {{ producto.grasas if producto.grasas is not none else 0 }}, 
-                    {{ producto.grasas_saturadas if producto.grasas_saturadas is not none else 0 }}, 
-                    {{ producto.proteinas if producto.proteinas is not none else 0 }}, 
-                    {{ producto.hidratos_carbono if producto.hidratos_carbono is not none else 0 }}, 
-                    {{ producto.azucares if producto.azucares is not none else 0 }}, 
-                    {{ producto.sal if producto.sal is not none else 0 }}
-                ],
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#81C784', '#BA68C8', '#FFD54F', '#4DB6AC'
-                ]
-            }]
-        };
-
-        const config = {
-            type: 'bar',
-            data: data,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.raw + (context.label === 'Calorías' ? ' kcal' : 'g');
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
+    const data = {
+        labels: ['Calorías','Grasas','Grasas Saturadas','Proteínas','Carbohidratos','Azúcares','Sal'],
+        datasets: [{
+            label: 'Valores Nutricionales',
+            data: [
+                {{ producto.kcal or 0 }},
+                {{ producto.grasas or 0 }},
+                {{ producto.grasas_saturadas or 0 }},
+                {{ producto.proteinas or 0 }},
+                {{ producto.hidratos_carbono or 0 }},
+                {{ producto.azucares or 0 }},
+                {{ producto.sal or 0 }}
+            ],
+            backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#81C784','#BA68C8','#FFD54F','#4DB6AC']
+        }]
+    };
+    const config = {
+        type: 'bar',
+        data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.raw + (ctx.label==='Calorías'?' kcal':'g')
                     }
                 }
-            }
-        };
-
-        const nutritionChart = new Chart(
-            document.getElementById('nutritionChart'),
-            config
-        );
+            },
+            scales: { y: { beginAtZero: true } }
+        }
+    };
+    new Chart(document.getElementById('nutritionChart'), config);
     </script>
     {% endif %}
 </body>
