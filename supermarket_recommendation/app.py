@@ -16,7 +16,7 @@ BaseDir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 model = OllamaLLM(model="llama3")
-productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv'))
+productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info_nuevo.csv'))
 
 # Configuración de la base de datos MySQL
 db_config = {

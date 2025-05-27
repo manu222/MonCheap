@@ -11,15 +11,15 @@ ID: identificador del producto que queremos comparar con el resto.
 Devuelve un diccionario con el id del producto con su similitud.
 '''
 def similitud(productos, id):
-    productos_features = productos.drop(["id"], axis=1)
-    p1_index = productos[productos['id'] == id].index[0]
+    productos_features = productos.drop(["id_producto"], axis=1)
+    p1_index = productos[productos['id_producto'] == id].index[0]
     p1_values = productos_features.iloc[p1_index].values.reshape(1, -1)
     # Calcular la similitud de coseno con todos los productos
     similitudes = cosine_similarity(p1_values, productos_features)[0]
  
     # Crear DataFrame con los resultados
     resultados = pd.DataFrame({
-        'id': productos['id'],
+        'id': productos['id_producto'],
         'sim': similitudes
     })
  
