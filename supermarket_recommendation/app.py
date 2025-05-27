@@ -367,14 +367,20 @@ def search():
 
     # Obtener todos los productos
     productos = get_products()
-    # Convertir a DataFrame
     df = pd.DataFrame(productos)
-    
-    # Realizar la búsqueda usando el sistema de tokens de df_tokens.py y funcionesMoncheap.py
-    # El token_processor se inicializa en funcionesMoncheap.py y utiliza df_tokens.csv
+
+    # Realizar búsqueda con similitud/tokenización personalizada
     resultados = busqueda(query, df)
-    
-    return jsonify(resultados)
+
+    # Eliminar duplicados por id_producto (conservando el primero encontrado)
+    seen_ids = set()
+    resultados_filtrados = []
+    for r in resultados:
+        if r['id_producto'] not in seen_ids:
+            seen_ids.add(r['id_producto'])
+            resultados_filtrados.append(r)
+
+    return jsonify(resultados_filtrados)
 
 @app.route('/mapa', )
 def mapa():
