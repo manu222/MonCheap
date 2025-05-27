@@ -22,7 +22,7 @@ productos_df = pd.read_csv(os.path.join(BaseDir, 'static', 'productos_info.csv')
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'root',
+    'password': '',
     'database': 'moncheap'
 }
 

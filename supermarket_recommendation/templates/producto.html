@@ -61,24 +61,7 @@
                             {% endif %}
                             <span class="badge bg-light text-dark p-2">Categoría: {{ producto.categoria }}</span>
                         </div>
-                        <div class="card bg-light border-0 p-3 my-4">
-                            <div class="price-section">
-                                {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
-                                    <h4 class="price mb-0">
-                                        Precio:
-                                        <span class="text-decoration-line-through text-muted">€{{ producto.precio|round(2) }}</span>
-                                        <strong class="text-danger">€{{ producto.precio_oferta|round(2) }}</strong>
-                                    </h4>
-                                {% elif producto.precio %}
-                                    <h4 class="price mb-0">Precio: <strong>€{{ producto.precio|round(2) }}</strong></h4>
-                                {% else %}
-                                    <h4 class="price mb-0">Precio no disponible</h4>
-                                {% endif %}
-                                {% if producto.precio_unidad %}
-                                    <p class="text-muted small mt-1">Precio por unidad: €{{ producto.precio_unidad|round(2) }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
+                       
 
                         <!-- LISTA DE PRECIOS POR SUPERMERCADO -->
                         <div class="card bg-light border-0 p-3 mb-4">
