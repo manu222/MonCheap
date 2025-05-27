@@ -395,33 +395,55 @@ def chat_api():
     # Recoger la pregunta del usuario
     user_message = request.get_data(as_text=True)
 
-    # Respuesta sin Fine-Tunning
-    #result = model.invoke(user_message)
-    #return "Moncheap: " + result
-
     # Tratar la pregunta del usuario para obtener palabras clave
     user_words = set(re.findall(r'\w+', user_message.lower()))
 
     # Obtener los productos de la base de datos
-    products = get_products()  
+    products = get_products()
     
-    # Eliminar campos innecesarios de los productos
+    # Filtrar productos relevantes basados en la consulta del usuario
     filtered_products = []
     for p in products:
-        del p['id_producto']
-        del p['img']
-
-    nombre_words = set(re.findall(r'\w+', p['nombre'].lower()))
-    if user_words & nombre_words:
-        filtered_products.append(p)
+        # Crear una copia del producto sin campos innecesarios
+        product_info = {
+            'nombre': p['nombre'],
+            'marca': p['marca'],
+            'categoria': p['categoria'],
+            'supermercado': p.get('supermercado', ''),
+            'precio': p.get('precio', 0)
+        }
+        
+        # Buscar coincidencias en nombre, marca y categoría
+        nombre_words = set(re.findall(r'\w+', p['nombre'].lower()))
+        marca_words = set(re.findall(r'\w+', p['marca'].lower()))
+        categoria_words = set(re.findall(r'\w+', p['categoria'].lower()))
+        
+        # Si hay coincidencia en alguno de los campos, añadir el producto
+        if user_words & (nombre_words | marca_words | categoria_words):
+            filtered_products.append(product_info)
+    
+    # Si no hay productos filtrados, usar los 5 productos más visitados
+    if not filtered_products:
+        most_viewed = get_most_viewed()
+        for p in most_viewed[:5]:
+            product_info = {
+                'nombre': p['nombre'],
+                'marca': p['marca'],
+                'categoria': p['categoria']
+            }
+            filtered_products.append(product_info)
 
     # Formamos el mensaje para el modelo
     prompt = f"""
-        Eres un asistente virtual que habla en español para una página de comparación de precios, llamada Moncheap.
-        Pregunta del usuario: {user_message}, 
-        Informacion sobre los productos del catálogo: {filtered_products}.
-        Quiero que respondas a la pregunta del usuario teniendo en cuenta los productos del catálogo
-        """
+    Eres un asistente virtual que habla en español para una página de comparación de precios, llamada Moncheap.
+    Pregunta del usuario: {user_message}
+    Información sobre los productos del catálogo: {filtered_products}
+    
+    Quiero que respondas a la pregunta del usuario teniendo en cuenta los productos del catálogo.
+    Si el usuario pregunta por un producto específico, menciona los productos relevantes que tenemos en el catálogo.
+    Si no hay productos relevantes, sugiere categorías de productos disponibles.
+    Sé amable, conciso y útil en tu respuesta.
+    """
     chain = ChatPromptTemplate.from_template("{prompt}") | model
     result = chain.invoke({"prompt": prompt})
     return Response("Moncheap: " + result, content_type='text/plain; charset=utf-8')
