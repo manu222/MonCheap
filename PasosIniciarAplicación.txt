@@ -16,8 +16,11 @@ venv\Scripts\activate
 # ---- En macOS / Linux ----
 # source venv/bin/activate
 
-# 3. Instalar los paquetes desde requirements.txt
+# 3. ---- BD ---- 
+# Tener la BD llamada moncheap con los datos del archivo supermarket.sql
+
+# 4. Instalar los paquetes desde requirements.txt
 pip install -r requirements.txt
 
-# 4. Abrir la terminal y desde el directorio MonCheap
+# 5. Abrir la terminal y desde el directorio MonCheap
 /supermarket_recommendation/ lanzar el comando: python app.py
